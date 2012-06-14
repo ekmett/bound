@@ -1,0 +1,35 @@
+name:          bound
+category:      Language, Compilers/Interpreters
+version:       0.1
+license:       BSD3
+cabal-version: >= 1.6
+license-file:  LICENSE
+author:        Edward A. Kmett
+maintainer:    Edward A. Kmett <ekmett@gmail.com>
+stability:     experimental
+homepage:      http://github.com/ekmett/bound/
+bug-reports:   http://github.com/ekmett/bound/issues
+copyright:     Copyright (C) 2012 Edward A. Kmett
+synopsis:      Simple combinators for working with locally-nameless generalized de Bruijn terms in Haskell 98
+description:   "I am not a number, I am a free monad!"
+build-type:    Simple
+extra-source-files: .travis.yml
+
+source-repository head
+  type: git
+  location: git://github.com/ekmett/bound.git
+
+library
+  build-depends:
+    base           >= 4     && < 5,
+    bifunctors     >= 0.1.3 && < 0.2,
+    prelude-extras >= 0.2   && < 0.3,
+    transformers   >= 0.2   && < 0.4
+
+  exposed-modules:
+    Bound
+    Bound.Class
+    Bound.Var
+    Bound.Scope
+
+  ghc-options: -Wall
