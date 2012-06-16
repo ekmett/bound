@@ -1,6 +1,6 @@
 name:          bound
 category:      Language, Compilers/Interpreters
-version:       0.1
+version:       0.1.1
 license:       BSD3
 cabal-version: >= 1.6
 license-file:  LICENSE
@@ -14,7 +14,7 @@ synopsis:      Combinators for manipulating locally-nameless generalized de Brui
 description:   Combinators for manipulating locally-nameless generalized de Bruijn terms
 
 build-type:    Simple
-extra-source-files: .travis.yml examples/Simple.hs examples/Exp.hs
+extra-source-files: .travis.yml examples/Simple.hs examples/Deriving.hs examples/Overkill.hs
 
 source-repository head
   type: git

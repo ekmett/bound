@@ -1,5 +1,8 @@
 module Simple where
 
+-- this is a simple example where lambdas only bind a single variable at a time
+-- this directly corresponds to the usual de bruijn presentation
+
 import Data.Foldable
 import Data.Traversable
 import Control.Monad
@@ -8,23 +11,10 @@ import Prelude hiding (foldr)
 import Prelude.Extras
 import Bound
 
--- \ x -> x
--- ghci> lam "x" (Var "x")
--- Lam (Var (Bound ()))
-
--- \ x -> x y
--- ghci> lam "x" (Var "x" :@ Var "y")
--- Lam (Var (Bound ()) :@ Var (Free (Var "y")))
-
--- \ y -> \x -> x y
--- ghci> lam "y" (lam "x" (Var "x" :@ Var "y"))
--- Lam (Lam (Var (Bound ()) :@ Var (Free (Var (Bound ())))))
-
 infixl 9 :@
 
 data Exp a = Var a | Exp a :@ Exp a | Lam (Scope () Exp a)
   deriving (Eq,Ord,Show,Read)
-
 
 lam :: Eq a => a -> Exp a -> Exp a
 lam v b = Lam (abstract1 v b)
@@ -50,3 +40,16 @@ instance Monad Exp where
   Var a    >>= f = f a
   (x :@ y) >>= f = (x >>= f) :@ (y >>= f)
   Lam e    >>= f = Lam (e >>>= f)
+
+-- \ x -> x
+-- ghci> lam "x" (Var "x")
+-- Lam (Var (Bound ()))
+
+-- \ x -> x y
+-- ghci> lam "x" (Var "x" :@ Var "y")
+-- Lam (Var (Bound ()) :@ Var (Free (Var "y")))
+
+-- \ y -> \x -> x y
+-- ghci> lam "y" (lam "x" (Var "x" :@ Var "y"))
+-- Lam (Lam (Var (Bound ()) :@ Var (Free (Var (Bound ())))))
+

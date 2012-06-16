@@ -11,7 +11,6 @@
 {-# LANGUAGE TypeOperators #-}
 module Exp where
 
-
 import Data.Vector as Vector hiding ((++), map)
 import Data.List as List
 import Data.Foldable
@@ -26,12 +25,6 @@ import GHC.Prim (Constraint(..))
 import Unsafe.Coerce
 import Bound
 
--- ghci> let_ [("x",Var "y"),("y",Var "x" :@ Var "y")] $ lam (varp "z") (Var "z" :@ Var "y")
--- Let (fromList [Scope (Var (B 1)),Scope (Var (B 0) :@ Var (B 1))]) (Scope (Lam VarP (Scope (Var (B V) :@ Var (F (Var (B 1)))))))
---
--- ghc> lam (varp "x") (Var "x")
--- ghc> lam (conp "Hello" [varp "x", wildp])) (Var "y")
-
 infixl 9 :@
 infixr 5 :>
 
@@ -44,9 +37,6 @@ data Exp a
   | Exp a :@ Exp a
   | forall (b :: Index). Lam (Pat b Exp a) (Scope (Path b) Exp a)
   | Let (Vector (Scope Int Exp a)) (Scope Int Exp a)
-  -- | Case (Exp a) [Alt Exp a]
-
-data Alt f a = forall b. Alt (Pat b f a) (Scope (Path b) Exp a)
 
 data Index = VarI | WildI | AsI Index | ConI [Index]
 
@@ -93,7 +83,6 @@ instance Monad Exp where
   (x :@ y) >>= f = (x >>= f) :@ (y >>= f)
   Lam p e  >>= f = Lam (p >>>= f) (e >>>= f)
   Let bs e >>= f = Let (fmap (>>>= f) bs) (e >>>= f)
- -- Case e as >>= f = Case (e >>= f) (fmap (>>>= f) as)
 
 instance Eq a => Eq (Exp a) where (==) = (==#)
 instance Eq1 Exp where
@@ -101,7 +90,6 @@ instance Eq1 Exp where
   (a :@ b)  ==# (c :@ d)  = a ==# c && b ==# d
   Lam ps a  ==# Lam qs b  = eqPat ps qs && a ==# unsafeCoerce b -- eqPat proves equal shape
   Let as a  ==# Let bs b  = as == bs && a ==# b
- -- Case e as ==# Case f bs = e ==# f && as == bs
   _         ==# _         = False
 
 instance Show a => Show (Exp a) where showsPrec = showsPrec1
@@ -110,17 +98,6 @@ instance Show1 Exp where
   showsPrec1 d (a :@ b)   = showParen (d > 9) $ showsPrec1 9 a . showString " :@ " . showsPrec1 10 b
   showsPrec1 d (Lam ps b) = showParen (d > 10) $ showString "Lam " . showsPrec1 11 ps . showChar ' ' . showsPrec1 11 b
   showsPrec1 d (Let bs b) = showParen (d > 10) $ showString "Let " . showsPrec1 11 bs . showChar ' ' . showsPrec1 11 b
-
-{-
-instance Eq1 f => Eq1 (Alt f) where
-  Alt p s ==# Alt q t = eqPat p q && s == unsafeCoerce t
-
-instance (Eq1 f, Eq a) => Eq (Alt f) where (==) = (==#)
-
-instance Show1 f => Show1 (Alt f) where
-  showsPrec d (Alt p s) = showsPrec d (Alt p s)
--}
-
 
 -- * smart lam
 
@@ -305,4 +282,6 @@ instance Show (Path i) where
   showsPrec d (R m) = showParen (d > 10) $ showString "R " . showsPrec 11 m
   showsPrec d (C p) = showParen (d > 10) $ showString "C " . showsPrec 11 p
 
-
+-- ghci> let_ [("x",Var "y"),("y",Var "x" :@ Var "y")] $ lam (varp "z") (Var "z" :@ Var "y")
+-- ghci> lam (varp "x") (Var "x")
+-- ghci> lam (conp "Hello" [varp "x", wildp])) (Var "y")
