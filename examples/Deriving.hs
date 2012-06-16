@@ -12,7 +12,7 @@ import Bound
 infixl 9 :@
 
 data Exp a
-  = Var a
+  = V a
   | Exp a :@ Exp a
   | Lam {-# UNPACK #-} !Int (Pat Exp a) (Scope Int Exp a)
   | Let {-# UNPACK #-} !Int [Scope Int Exp a] (Scope Int Exp a)
@@ -20,12 +20,12 @@ data Exp a
   deriving (Eq,Ord,Show,Read,Functor,Foldable,Traversable)
 
 instance Applicative Exp where
-  pure = Var
+  pure = V
   (<*>) = ap
 
 instance Monad Exp where
-  return          = Var
-  Var a      >>= f = f a
+  return = V
+  V a        >>= f = f a
   (x :@ y)   >>= f = (x >>= f) :@ (y >>= f)
   Lam n p e  >>= f = Lam n (p >>>= f) (e >>>= f)
   Let n bs e >>= f = Let n (map (>>>= f) bs) (e >>>= f)
@@ -41,7 +41,7 @@ data Pat f a
   | WildP
   | AsP (Pat f a)
   | ConP String [Pat f a]
-  | ViewP (f a) (Pat f a)
+  | ViewP (Scope Int f a) (Pat f a)
   deriving (Eq,Ord,Show,Read,Functor,Foldable,Traversable)
 
 instance Bound Pat where
@@ -49,7 +49,7 @@ instance Bound Pat where
   WildP     >>>= _ = WildP
   AsP p     >>>= f = AsP (p >>>= f)
   ConP g ps >>>= f = ConP g (map (>>>= f) ps)
-  ViewP e p >>>= f = ViewP (e >>= f) (p >>>= f)
+  ViewP e p >>>= f = ViewP (e >>>= f) (p >>>= f)
 
 data Alt f a = Alt {-# UNPACK #-} !Int (Pat f a) (Scope Int f a)
   deriving (Eq,Ord,Show,Read,Functor,Foldable,Traversable)
@@ -59,23 +59,30 @@ instance Bound Alt where
 
 -- ** smart patterns
 
-data P a = P { pattern :: Pat Exp a, bindings :: [a] }
+data P a = P { pattern :: [a] -> Pat Exp a, bindings :: [a] }
 
 varp :: a -> P a
-varp a = P VarP [a]
+varp a = P (const VarP) [a]
 
 wildp :: P a
-wildp = P WildP []
+wildp = P (const WildP) []
 
 asp :: a -> P a -> P a
-asp a (P p as) = P (AsP p) (a:as)
+asp a (P p as) = P (\bs -> AsP (p (a:bs))) (a:as)
 
 conp :: String -> [P a] -> P a
-conp g ps = P (ConP g (map pattern ps)) (ps >>= bindings)
+conp g ps = P (ConP g . go ps) (ps >>= bindings)
+  where
+    go (P p as:ps) bs = p bs : go ps (bs ++ as)
+    go [] _ = []
+
+-- | view patterns can view variables that are bound earlier than them in the pattern
+viewp :: Eq a => Exp a -> P a -> P a
+viewp t (P p as) = P (\bs -> ViewP (abstract (`elemIndex` bs) t) (p bs)) as
 
 -- | smart lam constructor
 lam :: Eq a => P a -> Exp a -> Exp a
-lam (P p as) t = Lam (length as) p (abstract (`elemIndex` as) t)
+lam (P p as) t = Lam (length as) (p []) (abstract (`elemIndex` as) t)
 
 -- | smart let constructor
 let_ :: Eq a => [(a, Exp a)] -> Exp a -> Exp a
@@ -85,9 +92,25 @@ let_ bs b = Let (length bs) (map (abstr . snd) bs) (abstr b)
 
 -- | smart alt constructor
 alt :: Eq a => P a -> Exp a -> Alt Exp a
-alt (P p as) t = Alt (length as) p (abstract (`elemIndex` as) t)
+alt (P p as) t = Alt (length as) (p []) (abstract (`elemIndex` as) t)
 
--- ghci> let_ [("x",Var "y"),("y",Var "x" :@ Var "y")] $ lam (varp "z") (Var "z" :@ Var "y")
--- ghci> lam (varp "x") (Var "x")
--- ghci> lam (conp "Hello" [varp "x", wildp])) (Var "y")
--- ghci> lam (varp "x") $ Case (Var "x") [alt (conp "Hello" [varp "z",wildp]) (Var "x"), alt (varp "y") (Var "y")]
+-- >>> let_ [("x",V "y"),("y",V "x" :@ V "y")] $ lam (varp "z") (V "z" :@ V "y")
+-- Let 2 [Scope (V (B 1)),Scope (V (B 0) :@ V (B 1))] (Scope (Lam 1 VarP (Scope (V (B 0) :@ V (F (V (B 1)))))))
+
+-- >>> lam (varp "x") (V "x")
+-- Lam 1 VarP (Scope (V (B 0)))
+
+-- >>> lam (conp "Hello" [varp "x", wildp]) (V "y")
+-- Lam 1 (ConP "Hello" [VarP,WildP]) (Scope (V (F (V "y"))))
+
+-- >>> lam (varp "x") $ Case (V "x") [alt (conp "Hello" [varp "z",wildp]) (V "x"), alt (varp "y") (V "y")]
+-- Lam 1 VarP (Scope (Case (V (B 0)) [Alt 1 (ConP "Hello" [VarP,WildP]) (Scope (V (F (V (B 0))))),Alt 1 VarP (Scope (V (B 0)))]))
+
+-- view patterns can reference name from earlier in the same scope
+-- >>> lam (conp "F" [varp "x", viewp (V "x") $ varp "y"]) (V "y")
+-- Lam 2 (ConP "F" [VarP,ViewP (Scope (V (B 0))) VarP]) (Scope (V (B 1)))
+
+-- but like in ghc, they refuse to allow references to subsequent bindings in the scope
+-- >>> lam (conp "F" [varp "x", viewp (V "y") $ varp "y"]) (V "y")
+-- Lam 2 (ConP "F" [VarP,ViewP (Scope (V (F (V "y")))) VarP]) (Scope (V (B 1)))
+
