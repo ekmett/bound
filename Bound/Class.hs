@@ -11,11 +11,23 @@
 ----------------------------------------------------------------------------
 module Bound.Class
   ( Bound(..)
+  , (=<<<)
   ) where
 
 infixl 1 >>>=
+
+-- | This may or may not be a monad transformer,
+--
+-- If it is, then you can use @m >>>= f = m >>= lift . f@
+--
+-- This is useful for types like expression lists, case alternatives,
+-- schemas, etc. that may not be expressions in their own right, but often
+-- contain one.
+
 class Bound t where
   (>>>=) :: Monad f => t f a -> (a -> f c) -> t f c
+  -- default (>>>=) :: MonadTrans t, Monad f) => t f a -> (a -> f c) -> t f c
+  -- m >>>= f = m >>= lift . f
 
 infixr 1 =<<<
 (=<<<) :: (Bound t, Monad f) => (a -> f c) -> t f a -> t f c

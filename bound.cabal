@@ -10,8 +10,9 @@ stability:     experimental
 homepage:      http://github.com/ekmett/bound/
 bug-reports:   http://github.com/ekmett/bound/issues
 copyright:     Copyright (C) 2012 Edward A. Kmett
-synopsis:      Simple combinators for working with locally-nameless generalized de Bruijn terms in Haskell 98
-description:   "I am not a number, I am a free monad!"
+synopsis:      Combinators for manipulating locally-nameless generalized de Bruijn terms
+description:   Combinators for manipulating locally-nameless generalized de Bruijn terms
+
 build-type:    Simple
 extra-source-files: .travis.yml
 
@@ -29,7 +30,8 @@ library
   exposed-modules:
     Bound
     Bound.Class
-    Bound.Var
     Bound.Scope
+    Bound.Term
+    Bound.Var
 
   ghc-options: -Wall
