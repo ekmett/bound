@@ -15,21 +15,41 @@ module Bound.Scope
   , abstract, abstract1
   -- * Instantiation
   , instantiate, instantiate1
-  -- * Substitution
-  , splat
-  -- * Quotienting
+  -- * Traditional de Bruijn
   , fromScope
   , toScope
+  -- * Bound variable manipulation
+  , splat
+  , bindings
+  , mapBound
+  , mapScope
+  , liftMBound
+  , liftMScope
+  , foldMapBound
+  , foldMapScope
+  , traverseBound_
+  , traverseScope_
+  , mapMBound_
+  , mapMScope_
+  , traverseBound
+  , traverseScope
+  , mapMBound
+  , mapMScope
   ) where
 
-import Data.Foldable
-import Data.Traversable
-import Control.Monad
-import Control.Monad.Trans.Class
-import Control.Applicative
-import Prelude.Extras
 import Bound.Class
 import Bound.Var
+import Control.Applicative
+import Control.Monad hiding (mapM, mapM_)
+import Control.Monad.Trans.Class
+import Data.Bifunctor
+import Data.Bifoldable
+import Data.Bitraversable
+import Data.Foldable
+import Data.Monoid
+import Data.Traversable
+import Prelude.Extras
+import Prelude hiding (foldr, mapM, mapM_)
 
 -- | @'Scope' b f a@ is a an @f@ expression with bound variables in @b@, and free variables in @a@
 --
@@ -83,7 +103,6 @@ unmangleScope :: Functor f => f (Lift2 Var b (Lift1 f a)) -> Scope b f a
 unmangleScope a = Scope (fmap (fmap lower1 . lower2) a)
 {-# INLINE unmangleScope #-}
 
-
 instance (Functor f, Show b, Show1 f, Show a) => Show  (Scope b f a) where showsPrec = showsPrec1
 instance (Functor f, Show b, Show1 f)         => Show1 (Scope b f)   where
   showsPrec1 d a = showParen (d > 10) $ showString "Scope " . showsPrec1 11 (mangleScope a)
@@ -115,13 +134,13 @@ instantiate k e = unscope e >>= \v -> case v of
   F a -> a
 {-# INLINE instantiate #-}
 
--- | Enter a scope with one bound variable, instantiating it
+-- | Enter a 'Scope' that binds one variable, instantiating it
 instantiate1 :: Monad f => f a -> Scope () f a -> f a
 instantiate1 e = instantiate (const e)
 {-# INLINE instantiate1 #-}
 
 -- | @'fromScope'@ quotients out the possible placements of 'F' in 'Scope'
--- by distributing them all to the leaves. This yields a more traditional 
+-- by distributing them all to the leaves. This yields a more traditional
 -- de Bruijn indexing scheme for bound variables.
 --
 -- > fromScope . toScope = id
@@ -138,9 +157,100 @@ toScope :: Monad f => f (Var b a) -> Scope b f a
 toScope e = Scope (liftM (fmap return) e)
 {-# INLINE toScope #-}
 
--- | Perform substitution on both bound and free variables in a scope
+-- | Perform substitution on both bound and free variables in a 'Scope'
 splat :: Monad f => (a -> f c) -> (b -> f c) -> Scope b f a -> f c
 splat f unbind s = unscope s >>= \v -> case v of
   B b -> unbind b
   F ea -> ea >>= f
 {-# INLINE splat #-}
+
+-- Return a list of occurences of the variables bound by this scope
+bindings :: Foldable f => Scope b f a -> [b]
+bindings (Scope s) = foldr f [] s where
+  f (B v) vs = v : vs
+  f _ vs     = vs
+{-# INLINE bindings #-}
+
+-- | Perform a change of variables on bound variables
+mapBound :: Functor f => (b -> b') -> Scope b f a -> Scope b' f a
+mapBound f (Scope s) = Scope (fmap f' s) where
+  f' (B b) = B (f b)
+  f' (F a) = F a
+{-# INLINE mapBound #-}
+
+-- | Perform a change of variables, reassigning both bound and free variables.
+mapScope :: Functor f => (b -> d) -> (a -> c) -> Scope b f a -> Scope d f c
+mapScope f g (Scope s) = Scope $ fmap (bimap f (fmap g)) s
+{-# INLINE mapScope #-}
+
+-- | Perform a change of variables on bound variables given only a 'Monad' instance
+liftMBound :: Monad m => (b -> b') -> Scope b m a -> Scope b' m a
+liftMBound f (Scope s) = Scope (liftM f' s) where
+  f' (B b) = B (f b)
+  f' (F a) = F a
+{-# INLINE liftMBound #-}
+
+-- | A version of 'mapScope' that can be used when you only have the 'Monad' instance
+liftMScope :: Monad m => (b -> d) -> (a -> c) -> Scope b m a -> Scope d m c
+liftMScope f g (Scope s) = Scope $ liftM (bimap f (liftM g)) s
+{-# INLINE liftMScope #-}
+
+-- | Obtain a result by collecting information from both bound and free variables
+foldMapBound :: (Foldable f, Monoid r) => (b -> r) -> Scope b f a -> r
+foldMapBound f (Scope s) = foldMap f' s where
+  f' (B a) = f a
+  f' _     = mempty
+{-# INLINE foldMapBound #-}
+
+-- | Obtain a result by collecting information from both bound and free variables
+foldMapScope :: (Foldable f, Monoid r) => (b -> r) -> (a -> r) -> Scope b f a -> r
+foldMapScope f g (Scope s) = foldMap (bifoldMap f (foldMap g)) s
+{-# INLINE foldMapScope #-}
+
+traverseBound_ :: (Applicative g, Foldable f) => (b -> g d) -> Scope b f a -> g ()
+traverseBound_ f (Scope s) = traverse_ f' s
+  where f' (B a) = () <$ f a
+        f' _     = pure ()
+{-# INLINE traverseBound_ #-}
+
+--- | Traverse both the variables bound by this scope and any free variables.
+traverseScope_ :: (Applicative g, Foldable f) => (b -> g d) -> (a -> g c) -> Scope b f a -> g ()
+traverseScope_ f g (Scope s) = traverse_ (bitraverse_ f (traverse_ g)) s
+{-# INLINE traverseScope_ #-}
+
+-- | mapM_ over the variables bound by this scope
+mapMBound_ :: (Monad g, Foldable f) => (b -> g d) -> Scope b f a -> g ()
+mapMBound_ f (Scope s) = mapM_ f' s where
+  f' (B a) = do _ <- f a; return ()
+  f' _     = return ()
+{-# INLINE mapMBound_ #-}
+
+--- | A 'traverseScope_' that can be used when you only have a 'Monad' instance
+mapMScope_ :: (Monad m, Foldable f) => (b -> m d) -> (a -> m c) -> Scope b f a -> m ()
+mapMScope_ f g (Scope s) = mapM_ (bimapM_ f (mapM_ g)) s
+{-# INLINE mapMScope_ #-}
+
+--- | Traverse both bound and free variables
+traverseBound :: (Applicative g, Traversable f) => (b -> g c) -> Scope b f a -> g (Scope c f a)
+traverseBound f (Scope s) = Scope <$> traverse f' s where
+  f' (B b) = B <$> f b
+  f' (F a) = pure (F a)
+{-# INLINE traverseBound #-}
+
+--- | Traverse both bound and free variables
+traverseScope :: (Applicative g, Traversable f) => (b -> g d) -> (a -> g c) -> Scope b f a -> g (Scope d f c)
+traverseScope f g (Scope s) = Scope <$> traverse (bitraverse f (traverse g)) s
+{-# INLINE traverseScope #-}
+
+--- | mapM over both bound and free variables
+mapMBound :: (Monad m, Traversable f) => (b -> m c) -> Scope b f a -> m (Scope c f a)
+mapMBound f (Scope s) = liftM Scope (mapM f' s) where
+  f' (B b) = liftM B (f b)
+  f' (F a) = return (F a)
+{-# INLINE mapMBound #-}
+
+--- | A 'traverseScope' that can be used when you only have a 'Monad' instance
+mapMScope :: (Monad m, Traversable f) => (b -> m d) -> (a -> m c) -> Scope b f a -> m (Scope d f c)
+mapMScope f g (Scope s) = liftM Scope (mapM (bimapM f (mapM g)) s)
+{-# INLINE mapMScope #-}
+
