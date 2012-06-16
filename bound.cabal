@@ -14,7 +14,7 @@ synopsis:      Combinators for manipulating locally-nameless generalized de Brui
 description:   Combinators for manipulating locally-nameless generalized de Bruijn terms
 
 build-type:    Simple
-extra-source-files: .travis.yml
+extra-source-files: .travis.yml examples/Simple.hs examples/Exp.hs
 
 source-repository head
   type: git
