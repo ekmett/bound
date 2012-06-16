@@ -22,7 +22,7 @@ import Control.Monad (ap)
 import Prelude.Extras
 import Text.Read
 
--- | "I am not a number, I am a /free monad/!"
+-- | \"I am not a number, I am a /free monad/!\"
 --
 -- @Var b a@ represents variables that may either be "bound" (@B@) or "free" (@F@)
 data Var b a
