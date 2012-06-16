@@ -51,18 +51,21 @@ import Data.Traversable
 import Prelude.Extras
 import Prelude hiding (foldr, mapM, mapM_)
 
--- | @'Scope' b f a@ is a an @f@ expression with bound variables in @b@, and free variables in @a@
+-- | @'Scope' b f a@ is an @f@ expression with bound variables in @b@, and free variables in @a@
 --
--- This stores bound variables as their generalized de Bruijn representation,
--- in that the succ's for variable ids are allowed to occur anywhere within the tree
--- permitting /O(1)/ weakening and allowing more sharing opportunities. 
--- Here the deBruijn 0 is represented by the 'B' constructor of 'Var', while the 
--- de Bruijn 'succ' (which may be applied to an entire tree!) is handled by 'F'.
+-- We store bound variables as their generalized de Bruijn representation,
+-- in that we're allowed to 'lift' (using 'F') an entire tree rather than only succ individual variables,
+-- but we're still only allowed to do so once per 'Scope'. Weakening trees permits /O(1)/ weakening
+-- permits more sharing opportunities. Here the deBruijn 0 is represented by the 'B' constructor of
+-- 'Var', while the de Bruijn 'succ' (which may be applied to an entire tree!) is handled by 'F'.
 --
--- NB: equality and comparison quotient out the distinct 'F' placements allowed by 
--- the choice of a generalized de Bruijn representation and return the same result as a traditional de Bruijn
+-- NB: equality and comparison quotient out the distinct 'F' placements allowed by
+-- the generalized de Bruijn representation and return the same result as a traditional de Bruijn
 -- representation would.
-
+--
+-- Logically you can think of this as if the shape were the traditional @f (Var b a)@, but the extra 
+-- 'f a' inside permits us a cheaper 'lift'.
+--
 newtype Scope b f a = Scope { unscope :: f (Var b (f a)) }
 
 instance Functor f => Functor (Scope b f) where
