@@ -103,7 +103,7 @@ cooked = fromJust $ closed $ let_
   , ("Pair", lam "a" $ lam "b" $ lam "p" $ V"p" :@ V"a" :@ V"b")
   , ("fst", lam "ab" $ V"ab" :@ (lam "a" $ lam "b" $ V"a"))
   , ("snd", lam "ab" $ V"ab" :@ (lam "a" $ lam "b" $ V"b"))
-  , ("fix", lam "g" $ (lam "x" $ V"g":@V"x":@V"x") :@ (lam "x" $ V"g":@V"x":@V"x"))
+  , ("fix", lam "g" $ (lam "x" $ V"g":@ (V"x":@V"x")) :@ (lam "x" $ V"g":@ (V"x":@V"x")))
   , ("add", V"fix" :@ (lam "radd" $ lam "x" $ lam "y" $ V"x" :@ V"y" :@ (lam "n" $ V"Succ" :@ (V"radd" :@ V"n" :@ V"y"))))
   , ("mul", V"fix" :@ (lam "rmul" $ lam "x" $ lam "y" $ V"x" :@ V"Zero" :@ (lam "n" $ V"add" :@ V"y" :@ (V"rmul" :@ V"n" :@ V"y"))))
   , ("fac", V"fix" :@ (lam "rfac" $ lam "x" $ V"x" :@ V"one" :@ (lam "n" $ V"mul" :@ V"x" :@ (V"rfac" :@ V"n"))))
