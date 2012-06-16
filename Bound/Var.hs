@@ -20,11 +20,12 @@ import Data.Bitraversable
 import Control.Applicative
 import Control.Monad (ap)
 import Prelude.Extras
-import Text.Read
 
 -- | \"I am not a number, I am a /free monad/!\"
 --
 -- @Var b a@ represents variables that may either be "bound" (@B@) or "free" (@F@)
+--
+-- It is also technically a free monad in the same near trivial sense as 'Either'
 data Var b a
   = B b -- this is a bound variable
   | F a -- this is a free variable
@@ -66,9 +67,9 @@ instance Bitraversable Var where
 instance Eq2 Var   where (==##)     = (==)
 instance Ord2 Var  where compare2   = compare
 instance Show2 Var where showsPrec2 = showsPrec
-instance Read2 Var where readPrec2  = readPrec
+instance Read2 Var where readsPrec2  = readsPrec
 
 instance Eq b   => Eq1   (Var b) where (==#)      = (==)
 instance Ord b  => Ord1  (Var b) where compare1   = compare
 instance Show b => Show1 (Var b) where showsPrec1 = showsPrec
-instance Read b => Read1 (Var b) where readPrec1  = readPrec
+instance Read b => Read1 (Var b) where readsPrec1  = readsPrec

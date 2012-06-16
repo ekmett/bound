@@ -95,21 +95,16 @@ instance (Monad f, Ord b, Ord1 f)        => Ord1 (Scope b f) where
   compare1 a b = liftM Lift2 (fromScope a) `compare1` liftM Lift2 (fromScope b)
   -- compare1 a b = compare1 (mangleScope a) (mangleScope b)
 
-mangleScope :: Functor f => Scope b f a -> f (Lift2 Var b (Lift1 f a))
-mangleScope (Scope a) = fmap (Lift2 . fmap Lift1) a
-{-# INLINE mangleScope #-}
-
-unmangleScope :: Functor f => f (Lift2 Var b (Lift1 f a)) -> Scope b f a
-unmangleScope a = Scope (fmap (fmap lower1 . lower2) a)
-{-# INLINE unmangleScope #-}
-
 instance (Functor f, Show b, Show1 f, Show a) => Show  (Scope b f a) where showsPrec = showsPrec1
 instance (Functor f, Show b, Show1 f)         => Show1 (Scope b f)   where
-  showsPrec1 d a = showParen (d > 10) $ showString "Scope " . showsPrec1 11 (mangleScope a)
+  showsPrec1 d a = showParen (d > 10) $ showString "Scope " . showsPrec1 11 (fmap (Lift2 . fmap Lift1) (unscope a))
 
 instance (Functor f, Read b, Read1 f, Read a) => Read  (Scope b f a) where readsPrec = readsPrec1
 instance (Functor f, Read b, Read1 f)         => Read1 (Scope b f) where
-  readPrec1 = liftM unmangleScope readPrec1
+  readsPrec1 d = readParen (d > 10) $ \r -> do
+    ("Scope", r') <- lex r
+    (s, r'') <- readsPrec1 11 r'
+    return (Scope (fmap (fmap lower1 . lower2) s), r'')
 
 instance Bound (Scope b) where
   m >>>= f = m >>= lift . f
