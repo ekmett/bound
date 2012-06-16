@@ -31,7 +31,7 @@ import Prelude.Extras
 import Bound.Class
 import Bound.Var
 
--- | @Scope b f a@ is a an @f@ expression with bound variables in @b@, and free variables in @a@
+-- | @'Scope' b f a@ is a an @f@ expression with bound variables in @b@, and free variables in @a@
 --
 -- This stores bound variables as their generalized de Bruijn representation,
 -- in that the succ's for variable ids are allowed to occur anywhere within the tree
@@ -48,7 +48,7 @@ newtype Scope b f a = Scope { unscope :: f (Var b (f a)) }
 instance Functor f => Functor (Scope b f) where
   fmap f (Scope a) = Scope (fmap (fmap (fmap f)) a)
 
--- | @toList@ is provides a list (with duplicates) of the free variables
+-- | @'toList'@ is provides a list (with duplicates) of the free variables
 instance Foldable f => Foldable (Scope b f) where
   foldMap f (Scope a) = foldMap (foldMap (foldMap f)) a
 
@@ -95,7 +95,7 @@ instance (Functor f, Read b, Read1 f)         => Read1 (Scope b f) where
 instance Bound (Scope b) where
   m >>>= f = m >>= lift . f
 
--- | Capture some free variables in an expression to yield a Scope with bound variables
+-- | Capture some free variables in an expression to yield a 'Scope' with bound variables in @b@
 abstract :: Monad f => (a -> Maybe b) -> f a -> Scope b f a
 abstract f e = Scope (liftM k e) where
   k y = case f y of
@@ -117,18 +117,17 @@ instantiate k e = unscope e >>= \v -> case v of
 
 -- | Enter a scope with one bound variable, instantiating it
 instantiate1 :: Monad f => f a -> Scope () f a -> f a
-instantiate1 e = instantiate (\ () -> e)
+instantiate1 e = instantiate (const e)
 {-# INLINE instantiate1 #-}
 
-
--- | @fromScope@ quotients out the possible placements of F in Scope
--- distributing them all to the leaves. This yields a traditional deBruijn
--- indexing scheme for bound variables.
+-- | @'fromScope'@ quotients out the possible placements of 'F' in 'Scope'
+-- by distributing them all to the leaves. This yields a more traditional 
+-- de Bruijn indexing scheme for bound variables.
 --
 -- > fromScope . toScope = id
 -- > fromScope . toScope . fromScope = fromScope
 --
--- @(toScope . fromScope)@ is idempotent
+-- @('toScope' . 'fromScope')@ is idempotent
 fromScope :: Monad f => Scope b f a -> f (Var b a)
 fromScope (Scope s) = s >>= \v -> case v of
   F e -> liftM F e

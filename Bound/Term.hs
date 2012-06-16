@@ -15,10 +15,11 @@ module Bound.Term
   , closed
   ) where
 
+import Data.Foldable
 import Data.Traversable
-import Data.Maybe (isJust)
+import Prelude hiding (all)
 
--- | @substitute p a w@ replaces the free variable @a@ with @p@ in @w@
+-- | @'substitute' p a w@ replaces the free variable @a@ with @p@ in @w@
 substitute :: (Monad f, Eq a) => f a -> a -> f a -> f a
 substitute p a w = w >>= \b -> if a == b then p else return b
 {-# INLINE substitute #-}
@@ -28,6 +29,6 @@ closed :: Traversable f => f a -> Maybe (f b)
 closed = traverse (const Nothing)
 {-# INLINE closed #-}
 
-isClosed :: Traversable f => f a -> Bool
-isClosed = isJust . closed
+isClosed :: Foldable f => f a -> Bool
+isClosed = all (const False)
 {-# INLINE isClosed #-}
