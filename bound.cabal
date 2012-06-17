@@ -1,6 +1,6 @@
 name:          bound
 category:      Language, Compilers/Interpreters
-version:       0.2
+version:       0.2.1
 license:       BSD3
 cabal-version: >= 1.6
 license-file:  LICENSE
@@ -116,4 +116,4 @@ library
     Bound.Term
     Bound.Var
 
-  ghc-options: -Wall
+  ghc-options: -Wall -O2 -fspec-constr -fdicts-cheap

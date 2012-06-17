@@ -1,3 +1,7 @@
+{-# LANGUAGE CPP #-}
+#ifdef __GLASGOW_HASKELL__
+{-# LANGUAGE DefaultSignatures #-}
+#endif
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Bound.Class
@@ -14,9 +18,13 @@ module Bound.Class
   , (=<<<)
   ) where
 
+#ifdef __GLASGOW_HASKELL__
+import Control.Monad.Trans.Class
+#endif
+
 infixl 1 >>>=
 
--- | Instantces may or may not be monad transformers.
+-- | Instances may or may not be monad transformers.
 --
 -- If they are, then you can use @m >>>= f = m >>= lift . f@
 --
@@ -26,8 +34,10 @@ infixl 1 >>>=
 
 class Bound t where
   (>>>=) :: Monad f => t f a -> (a -> f c) -> t f c
-  -- default (>>>=) :: (MonadTrans t, Monad f) => t f a -> (a -> f c) -> t f c
-  -- m >>>= f = m >>= lift . f
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 704
+  default (>>>=) :: (MonadTrans t, Monad f, Monad (t f)) => t f a -> (a -> f c) -> t f c
+  m >>>= f = m >>= lift . f
+#endif
 
 infixr 1 =<<<
 (=<<<) :: (Bound t, Monad f) => (a -> f c) -> t f a -> t f c
