@@ -60,11 +60,11 @@ module Bound
   -- * Structures permitting substitution
   , Bound(..)
   , (=<<<)
-  -- ** Conversion to Traditional de Bruijn
+  -- * Conversion to Traditional de Bruijn
   , Var(..)
   , fromScope
   , toScope
-  -- ** Advanced substitution combinators
+  -- * Advanced substitution combinators
   , splat
   , mapBound, mapScope
   , liftMBound, liftMScope
