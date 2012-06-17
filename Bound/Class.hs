@@ -35,7 +35,8 @@ infixl 1 >>>=
 class Bound t where
   (>>>=) :: Monad f => t f a -> (a -> f c) -> t f c
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 704
-  default (>>>=) :: (MonadTrans t, Monad f, Monad (t f)) => t f a -> (a -> f c) -> t f c
+  default (>>>=) :: (MonadTrans t, Monad f, Monad (t f)) =>
+                    t f a -> (a -> f c) -> t f c
   m >>>= f = m >>= lift . f
 #endif
 

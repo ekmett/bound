@@ -9,10 +9,10 @@
 -- Portability :  portable
 --
 -- We represent the target language itself as an ideal monad supplied by the
--- user, and provide a 'Scope' monad transformer for introducing bound variables
--- in user supplied terms. Users supply a 'Monad' and 'Traversable' instance, and we
--- traverse to find free variables, and use the 'Monad' to perform substitution
--- that avoids bound variables.
+-- user, and provide a 'Scope' monad transformer for introducing bound 
+-- variables in user supplied terms. Users supply a 'Monad' and 'Traversable'
+-- instance, and we traverse to find free variables, and use the 'Monad' to
+-- perform substitution that avoids bound variables.
 --
 -- An untyped lambda calculus:
 --

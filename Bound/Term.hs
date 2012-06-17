@@ -24,11 +24,13 @@ substitute :: (Monad f, Eq a) => f a -> a -> f a -> f a
 substitute p a w = w >>= \b -> if a == b then p else return b
 {-# INLINE substitute #-}
 
--- | If a term has no free variables, you can freely change the type of free variables it uses
+-- | If a term has no free variables, you can freely change the type of
+-- free variables it is parameterized on.
 closed :: Traversable f => f a -> Maybe (f b)
 closed = traverse (const Nothing)
 {-# INLINE closed #-}
 
+-- | A closed term has no free variables.
 isClosed :: Foldable f => f a -> Bool
 isClosed = all (const False)
 {-# INLINE isClosed #-}
