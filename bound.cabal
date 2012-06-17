@@ -74,7 +74,7 @@ description:
    set of variables is visible in the type, we can provide stronger type safety
    guarantees.
    .
-   There are longer worked examples in the @examples/@ folder:
+   There are longer examples in the @examples/@ folder:
    .
    <https://github.com/ekmett/bound/tree/master/examples>
    .

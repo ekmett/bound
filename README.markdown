@@ -8,7 +8,7 @@ This library provides convenient combinators for working with "locally-nameless"
 when writing a type checker, evalator, parser, or pretty printer for terms that contain binders like forall
 or lambda, as they ease the task of avoiding variable capture and testing for alpha-equivalence.
 
-See [the documentation](http://hackage.haskell.org/package/bound) on hackage for more information.
+See [the documentation](http://hackage.haskell.org/package/bound) on hackage for more information, but here is an example:
 
      import Bound
      import Prelude.Extras
