@@ -9,7 +9,9 @@
 -- Portability :  portable
 --
 ----------------------------------------------------------------------------
-module Bound.Var (Var(..)) where
+module Bound.Var
+  ( Var(..)
+  ) where
 
 import Data.Foldable
 import Data.Traversable
@@ -23,12 +25,13 @@ import Prelude.Extras
 
 -- | \"I am not a number, I am a /free monad/!\"
 --
--- @Var b a@ represents variables that may either be "bound" (@B@) or "free" (@F@)
+-- A @Var b a@ is a variable that may either be \"bound\" or \"free\".
 --
--- It is also technically a free monad in the same near trivial sense as 'Either'
+-- (It is also technically a free monad in the same near trivial sense as
+-- 'Either'.)
 data Var b a
-  = B b -- this is a bound variable
-  | F a -- this is a free variable
+  = B b -- ^ this is a bound variable
+  | F a -- ^ this is a free variable
   deriving (Eq,Ord,Show,Read)
 
 instance Functor (Var b) where
