@@ -44,19 +44,22 @@
 -- >   f'    -> f' :@ a
 -- > whnf e = e
 --
+-- More exotic combinators for manipulating a 'Scope' can be imported from
+-- "Bound.Scope".
+--
 ----------------------------------------------------------------------------
 module Bound
   (
+  -- * Manipulating user terms
+    substitute
+  , isClosed
+  , closed
   -- * Scopes introduce bound variables
-    Scope(..)
+  , Scope(..)
   -- ** Abstraction over bound variables
   , abstract, abstract1
   -- ** Instantiation of bound variables
   , instantiate, instantiate1
-  -- * Manipulating terms
-  , substitute
-  , isClosed
-  , closed
   -- * Structures permitting substitution
   , Bound(..)
   , (=<<<)
@@ -64,15 +67,6 @@ module Bound
   , Var(..)
   , fromScope
   , toScope
-  -- * Advanced substitution combinators
-  , splat
-  , mapBound, mapScope
-  , liftMBound, liftMScope
-  , foldMapBound, foldMapScope
-  , traverseBound_, traverseScope_
-  , mapMBound_, mapMScope_
-  , traverseBound, traverseScope
-  , mapMBound, mapMScope
   ) where
 
 import Bound.Var
