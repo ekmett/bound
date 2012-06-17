@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#ifdef __GLASGOW_HASKELL__
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 704
 {-# LANGUAGE DefaultSignatures #-}
 #endif
 -----------------------------------------------------------------------------
@@ -18,7 +18,7 @@ module Bound.Class
   , (=<<<)
   ) where
 
-#ifdef __GLASGOW_HASKELL__
+#ifdef defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 704
 import Control.Monad.Trans.Class
 #endif
 
