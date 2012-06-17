@@ -47,13 +47,13 @@
 ----------------------------------------------------------------------------
 module Bound
   (
-  -- * Scopes introduce bound variables in user terms
+  -- * Scopes introduce bound variables
     Scope(..)
   -- ** Abstraction over bound variables
   , abstract, abstract1
   -- ** Instantiation of bound variables
   , instantiate, instantiate1
-  -- * Combinators for manipulating user terms
+  -- * Manipulating terms
   , substitute
   , isClosed
   , closed
