@@ -129,7 +129,7 @@ test-suite Simple
     transformers   >= 0.2   && < 0.4
   type: exitcode-stdio-1.0
   hs-source-dirs: src examples
-  main-is: Simple.hs
+  main-is: examples/Simple.hs
   other-modules:
     Bound
     Bound.Class
