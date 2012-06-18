@@ -2,7 +2,7 @@ name:          bound
 category:      Language, Compilers/Interpreters
 version:       0.3
 license:       BSD3
-cabal-version: >= 1.6
+cabal-version: >= 1.9.2
 license-file:  LICENSE
 author:        Edward A. Kmett
 maintainer:    Edward A. Kmett <ekmett@gmail.com>
@@ -10,7 +10,7 @@ stability:     experimental
 homepage:      http://github.com/ekmett/bound/
 bug-reports:   http://github.com/ekmett/bound/issues
 copyright:     Copyright (C) 2012 Edward A. Kmett
-synopsis:      Haskell 98 Locally-Nameless Generalized de Bruijn Terms
+synopsis:      Haskell 98/2010 Locally-Nameless Generalized de Bruijn Terms
 description:
    We represent the target language itself as an ideal monad supplied by the
    user, and provide a 'Scope' monad transformer for introducing bound variables
@@ -105,6 +105,7 @@ source-repository head
   location: git://github.com/ekmett/bound.git
 
 library
+  hs-source-dirs: src
   build-depends:
     base           >= 4     && < 5,
     bifunctors     >= 0.1.3 && < 0.2,
@@ -119,3 +120,19 @@ library
     Bound.Var
 
   ghc-options: -Wall -O2 -fspec-constr -fdicts-cheap
+
+test-suite Simple
+  build-depends:
+    base           >= 4     && < 5,
+    bifunctors     >= 0.1.3 && < 0.2,
+    prelude-extras >= 0.2   && < 0.3,
+    transformers   >= 0.2   && < 0.4
+  type: exitcode-stdio-1.0
+  hs-source-dirs: src examples
+  main-is: Simple.hs
+  other-modules:
+    Bound
+    Bound.Class
+    Bound.Scope
+    Bound.Term
+    Bound.Var

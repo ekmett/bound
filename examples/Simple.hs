@@ -1,4 +1,4 @@
-module Simple where
+module Main where
 
 -- this is a simple example where lambdas only bind a single variable at a time
 -- this directly corresponds to the usual de bruijn presentation
@@ -13,6 +13,7 @@ import Control.Applicative
 import Prelude hiding (foldr,abs)
 import Prelude.Extras
 import Bound
+import System.Exit
 
 infixl 9 :@
 
@@ -171,3 +172,4 @@ main = do
     else do
       putStrLn "Unexpected result:"
       pp result
+      exitFailure
