@@ -37,8 +37,7 @@ lam v b = Lam (abstract1 v b)
 let_ :: Eq a => [(a,Exp a)] -> Exp a -> Exp a
 let_ [] b = b
 let_ bs b = Let (map (abstr . snd) bs) (abstr b)
-  where vs = map fst bs
-        abstr = abstract (`elemIndex` vs)
+  where abstr = abstract (`elemIndex` map fst bs)
 
 instance Functor Exp  where fmap       = fmapDefault
 instance Foldable Exp where foldMap    = foldMapDefault
@@ -69,8 +68,7 @@ instance Read1 Exp    where readsPrec1 = readsPrec
 -- | Compute the normal form of an expression
 nf :: Exp a -> Exp a
 nf e@V{}   = e
-nf (Lam b)      = Lam $ toScope $ nf $ fromScope b
--- nf (Lam (Scope b)) = Lam $ Scope $ fmap (fmap nf) (nf b)
+nf (Lam b) = Lam $ toScope $ nf $ fromScope b
 nf (f :@ a) = case whnf f of
   Lam b -> nf (instantiate1 a b)
   f' -> nf f' :@ nf a

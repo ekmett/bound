@@ -120,7 +120,7 @@ instance (Functor f, Read b, Read1 f)         => Read1 (Scope b f) where
     return (Scope (fmap (fmap lower1 . lower2) s), r'')
 
 instance Bound (Scope b) where
-  m >>>= f = m >>= lift . f
+  Scope m >>>= f = Scope (liftM (fmap (>>= f)) m)
 
 -- | Capture some free variables in an expression to yield
 -- a 'Scope' with bound variables in @b@
