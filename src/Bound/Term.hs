@@ -19,9 +19,9 @@ import Data.Foldable
 import Data.Traversable
 import Prelude hiding (all)
 
--- | @'substitute' p a w@ replaces the free variable @a@ with @p@ in @w@
-substitute :: (Monad f, Eq a) => f a -> a -> f a -> f a
-substitute p a w = w >>= \b -> if a == b then p else return b
+-- | @'substitute' a p w@ replaces the free variable @a@ with @p@ in @w@
+substitute :: (Monad f, Eq a) => a -> f a -> f a -> f a
+substitute a p w = w >>= \b -> if a == b then p else return b
 {-# INLINE substitute #-}
 
 -- | If a term has no free variables, you can freely change the type of
