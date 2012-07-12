@@ -1,6 +1,8 @@
 Bound
 =====
 
+[![Build Status](https://secure.travis-ci.org/ekmett/bound.png?branch=master)](http://travis-ci.org/ekmett/bound)
+
 Goals
 -----
 
