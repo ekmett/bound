@@ -1,6 +1,6 @@
 name:          bound
 category:      Language, Compilers/Interpreters
-version:       0.4
+version:       0.4.1
 license:       BSD3
 cabal-version: >= 1.9.2
 license-file:  LICENSE
@@ -103,6 +103,7 @@ extra-source-files:
   examples/Deriving.hs
   examples/Overkill.hs
   README.markdown
+  CHANGELOG.markdown
 
 source-repository head
   type: git
