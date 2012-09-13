@@ -23,6 +23,10 @@ import Control.Applicative
 import Control.Monad (ap)
 import Prelude.Extras
 
+----------------------------------------------------------------------------
+-- Bound and Free Variables
+----------------------------------------------------------------------------
+
 -- | \"I am not a number, I am a /free monad/!\"
 --
 -- A @'Var' b a@ is a variable that may either be \"bound\" ('B') or \"free\" ('F').
@@ -33,6 +37,10 @@ data Var b a
   = B b -- ^ this is a bound variable
   | F a -- ^ this is a free variable
   deriving (Eq,Ord,Show,Read)
+
+----------------------------------------------------------------------------
+-- Instances
+----------------------------------------------------------------------------
 
 instance Functor (Var b) where
   fmap _ (B b) = B b

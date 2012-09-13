@@ -80,6 +80,10 @@ import Prelude hiding (foldr, mapM, mapM_)
 --
 newtype Scope b f a = Scope { unscope :: f (Var b (f a)) }
 
+-------------------------------------------------------------------------------
+-- Instances
+-------------------------------------------------------------------------------
+
 instance Functor f => Functor (Scope b f) where
   fmap f (Scope a) = Scope (fmap (fmap (fmap f)) a)
 
@@ -209,7 +213,7 @@ toScope e = Scope (liftM (fmap return) e)
 {-# INLINE toScope #-}
 
 -------------------------------------------------------------------------------
--- Working Directly with Bound Variables
+-- Exotic Traversals of Bound Variables (not exported by default)
 -------------------------------------------------------------------------------
 
 -- | Perform substitution on both bound and free variables in a 'Scope'.
