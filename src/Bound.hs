@@ -67,6 +67,39 @@
 -- You can also retain names in your bound variables by using 'Bound.Name.Name'
 -- and the related combinators from "Bound.Name". They are not re-exported
 -- from this module by default.
+--
+-- The approach used in this package was first elaborated upon by Richard Bird 
+-- and Ross Patterson
+-- in \"de Bruijn notation as a nested data type\", available from
+-- <http://www.cs.uwyo.edu/~jlc/courses/5000_fall_08/debruijn_as_nested_datatype.pdf>
+--
+-- However, the combinators they used required higher rank types. Here we
+-- demonstrate that the higher rank @gfold@ combinator they used isn't necessary
+-- to build the monad and use a monad transformer to encapsulate the novel
+-- recursion pattern in their generalized de Bruijn representation. It is named
+-- 'Scope' to match up with the terminology and usage pattern from Conor McBride
+-- and James McKinna's \"I am not a number: I am a free variable\", available
+-- from <http://www.cs.st-andrews.ac.uk/~james/RESEARCH/notanum.pdf>, but since
+-- the set of variables is visible in the type, we can provide stronger type
+-- safety guarantees.
+--
+-- There are longer examples in the @examples/@ folder:
+--
+-- <https://github.com/ekmett/bound/tree/master/examples>
+--
+-- (1) /Simple.hs/ provides an untyped lambda calculus with recursive let
+--   bindings and includes an evaluator for the untyped lambda calculus and a
+--   longer example taken from Lennart Augustsson's "λ-calculus cooked four
+--   ways" available from <http://www.augustsson.net/Darcs/Lambda/top.pdf>
+--
+-- 2. /Derived.hs/ shows how much of the API can be automated with
+--    DeriveTraversable and adds combinators for building binders that support
+--    pattern matching.
+--
+-- 3. /Overkill.hs/ provides very strongly typed pattern matching many modern
+--   language extensions, including polymorphic kinds to ensure type safety.
+--   In general, the approach taken by Derived seems to deliver a better power
+--   to weight ratio.
 ----------------------------------------------------------------------------
 module Bound
   (
