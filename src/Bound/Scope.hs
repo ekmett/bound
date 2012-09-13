@@ -55,6 +55,10 @@ import Data.Traversable
 import Prelude.Extras
 import Prelude hiding (foldr, mapM, mapM_)
 
+-------------------------------------------------------------------------------
+-- Scopes
+-------------------------------------------------------------------------------
+
 -- | @'Scope' b f a@ is an @f@ expression with bound variables in @b@,
 -- and free variables in @a@
 --
@@ -126,8 +130,16 @@ instance (Functor f, Read b, Read1 f)         => Read1 (Scope b f) where
 instance Bound (Scope b) where
   Scope m >>>= f = Scope (liftM (fmap (>>= f)) m)
 
+-------------------------------------------------------------------------------
+-- Abstraction
+-------------------------------------------------------------------------------
+
 -- | Capture some free variables in an expression to yield
 -- a 'Scope' with bound variables in @b@
+--
+-- >>> :m + Data.List
+-- >>> abstract (`elemIndex` "bar") "barry"
+-- Scope [B 0,B 1,B 2,B 2,F "y"]
 abstract :: Monad f => (a -> Maybe b) -> f a -> Scope b f a
 abstract f e = Scope (liftM k e) where
   k y = case f y of
@@ -135,33 +147,54 @@ abstract f e = Scope (liftM k e) where
     Nothing -> F (return y)
 {-# INLINE abstract #-}
 
+-- | Abstract over a single variable
+--
+-- >>> abstract1 'x' "xyz"
+-- Scope [B (),F "y",F "z"]
+abstract1 :: (Monad f, Eq a) => a -> f a -> Scope () f a
+abstract1 a = abstract (\b -> if a == b then Just () else Nothing)
+{-# INLINE abstract1 #-}
+
+-------------------------------------------------------------------------------
+-- Instantiation
+-------------------------------------------------------------------------------
+
 -- | Enter a scope, instantiating all bound variables
+--
+-- >>> :m + Data.List
+-- >>> instantiate (\x -> [toEnum (97 + x)]) $ abstract (`elemIndex` "bar") "barry"
+-- "abccy"
 instantiate :: Monad f => (b -> f a) -> Scope b f a -> f a
 instantiate k e = unscope e >>= \v -> case v of
   B b -> k b
   F a -> a
 {-# INLINE instantiate #-}
 
--- * Special purpose combinators
-
--- | Abstract over a single variable
-abstract1 :: (Monad f, Eq a) => a -> f a -> Scope () f a
-abstract1 a = abstract (\b -> if a == b then Just () else Nothing)
-{-# INLINE abstract1 #-}
-
 -- | Enter a 'Scope' that binds one variable, instantiating it
+--
+-- >>> instantiate1 "x" $ Scope [B (),F "y",F "z"]
+-- "xyz"
 instantiate1 :: Monad f => f a -> Scope () f a -> f a
 instantiate1 e = instantiate (const e)
 {-# INLINE instantiate1 #-}
+
+-------------------------------------------------------------------------------
+-- Traditional de Bruijn
+-------------------------------------------------------------------------------
 
 -- | @'fromScope'@ quotients out the possible placements of 'F' in 'Scope'
 -- by distributing them all to the leaves. This yields a more traditional
 -- de Bruijn indexing scheme for bound variables.
 --
--- > fromScope . toScope = id
--- > fromScope . toScope . fromScope = fromScope
+-- Since,
 --
--- @('toScope' . 'fromScope')@ is idempotent
+-- @'fromScope' '.' 'toScope' ≡ 'id'@
+--
+-- we know that
+--
+-- @'fromScope' '.' 'toScope' '.' 'fromScope' ≡ 'fromScope'@
+--
+-- and therefore @('toScope' . 'fromScope')@ is idempotent.
 fromScope :: Monad f => Scope b f a -> f (Var b a)
 fromScope (Scope s) = s >>= \v -> case v of
   F e -> liftM F e
@@ -174,6 +207,10 @@ fromScope (Scope s) = s >>= \v -> case v of
 toScope :: Monad f => f (Var b a) -> Scope b f a
 toScope e = Scope (liftM (fmap return) e)
 {-# INLINE toScope #-}
+
+-------------------------------------------------------------------------------
+-- Working Directly with Bound Variables
+-------------------------------------------------------------------------------
 
 -- | Perform substitution on both bound and free variables in a 'Scope'.
 splat :: Monad f => (a -> f c) -> (b -> f c) -> Scope b f a -> f c
