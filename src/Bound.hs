@@ -9,40 +9,57 @@
 -- Portability :  portable
 --
 -- We represent the target language itself as an ideal monad supplied by the
--- user, and provide a 'Scope' monad transformer for introducing bound 
+-- user, and provide a 'Scope' monad transformer for introducing bound
 -- variables in user supplied terms. Users supply a 'Monad' and 'Traversable'
 -- instance, and we traverse to find free variables, and use the 'Monad' to
 -- perform substitution that avoids bound variables.
 --
 -- An untyped lambda calculus:
 --
--- > import Bound
--- > import Prelude.Extras
+-- @
+-- {-\# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable \#-}
+-- import Bound
+-- import Control.Applicative
+-- import Control.Monad ('Control.Monad.ap')
+-- import Prelude.Extras
+-- import Data.Foldable
+-- import Data.Traverable
+-- @
 --
--- > infixl 9 :@
--- > data Exp a = V a | Exp a :@ Exp a | Lam (Scope () Exp a)
--- >  deriving (Eq,Ord,Show,Read,Functor,Foldable,Traversable)
+-- @
+-- infixl 9 :\@
+-- data Exp a = V a | Exp a :\@ Exp a | Lam ('Scope' () Exp a)
+--   deriving ('Eq','Ord','Show','Read','Functor','Data.Foldable.Foldable','Data.Foldable.Traversable')
+-- @
 --
--- > instance Eq1 Exp   where (==#)      = (==)
--- > instance Ord1 Exp  where compare1   = compare
--- > instance Show1 Exp where showsPrec1 = showsPrec
--- > instance Read1 Exp where readsPrec1 = readsPrec
--- > instance Applicative Exp where pure = V; (<*>) = ap
+-- @
+-- instance 'Prelude.Extras.Eq1' Exp   where ('Prelude.Extras.==#')      = ('==')
+-- instance 'Prelude.Extras.Ord1' Exp  where 'Prelude.Extras.compare1'   = 'compare'
+-- instance 'Prelude.Extras.Show1' Exp where 'Prelude.Extras.showsPrec1' = 'showsPrec'
+-- instance 'Prelude.Extras.Read1' Exp where 'Prelude.Extras.readsPrec1' = 'readsPrec'
+-- instance 'Control.Applicative.Applicative' Exp where 'Control.Applicative.pure' = V; ('<*>') = 'Control.Monad.ap'
+-- @
 --
--- > instance Monad Exp where
--- >   return = V
--- >   V a      >>= f = f a
--- >   (x :@ y) >>= f = (x >>= f) :@ (y >>= f)
--- >   Lam e    >>= f = Lam (e >>>= f)
--- >
--- > lam :: Eq a => a -> Exp a -> Exp a
--- > lam v b = Lam (abstract1 v b)
+-- @
+-- instance 'Monad' Exp where
+--   'return' = V
+--   V a      '>>=' f = f a
+--   (x :\@ y) '>>=' f = (x '>>=' f) :\@ (y >>= f)
+--   Lam e    '>>=' f = Lam (e '>>>=' f)
+-- @
 --
--- > whnf :: Exp a -> Exp a
--- > whnf (f :@ a) = case whnf f of
--- >   Lam b -> whnf (instantiate1 a b)
--- >   f'    -> f' :@ a
--- > whnf e = e
+-- @
+-- lam :: 'Eq' a => a -> 'Exp' a -> 'Exp' a
+-- lam v b = Lam ('abstract1' v b)
+-- @
+--
+-- @
+-- whnf :: 'Exp' a -> 'Exp' a
+-- whnf (f :\@ a) = case whnf f of
+--   Lam b -> whnf ('instantiate1' a b)
+--   f'    -> f' :\@ a
+-- whnf e = e
+-- @
 --
 -- More exotic combinators for manipulating a 'Scope' can be imported from
 -- "Bound.Scope".

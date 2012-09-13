@@ -21,6 +21,10 @@ description:
    An untyped lambda calculus:
    .
    > import Bound
+   > import Control.Applicative
+   > import Control.Monad (ap)
+   > import Data.Foldable
+   > import Data.Traversable
    > import Prelude.Extras
    .
    > infixl 9 :@

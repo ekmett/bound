@@ -25,9 +25,9 @@ import Prelude.Extras
 
 -- | \"I am not a number, I am a /free monad/!\"
 --
--- A @Var b a@ is a variable that may either be \"bound\" or \"free\".
+-- A @'Var' b a@ is a variable that may either be \"bound\" ('B') or \"free\" ('F').
 --
--- (It is also technically a free monad in the same near trivial sense as
+-- (It is also technically a free monad in the same near-trivial sense as
 -- 'Either'.)
 data Var b a
   = B b -- ^ this is a bound variable

@@ -8,6 +8,10 @@
 -- Stability   :  experimental
 -- Portability :  portable
 --
+-- This is the work-horse of the @bound@ library.
+--
+-- 'Scope' provides a single generalized de Bruijn level
+-- and is often used inside of the definition of binders.
 ----------------------------------------------------------------------------
 module Bound.Scope
   ( Scope(..)
@@ -171,21 +175,21 @@ toScope :: Monad f => f (Var b a) -> Scope b f a
 toScope e = Scope (liftM (fmap return) e)
 {-# INLINE toScope #-}
 
--- | Perform substitution on both bound and free variables in a 'Scope'
+-- | Perform substitution on both bound and free variables in a 'Scope'.
 splat :: Monad f => (a -> f c) -> (b -> f c) -> Scope b f a -> f c
 splat f unbind s = unscope s >>= \v -> case v of
   B b -> unbind b
   F ea -> ea >>= f
 {-# INLINE splat #-}
 
--- Return a list of occurences of the variables bound by this scope
+-- | Return a list of occurences of the variables bound by this 'Scope'.
 bindings :: Foldable f => Scope b f a -> [b]
 bindings (Scope s) = foldr f [] s where
   f (B v) vs = v : vs
   f _ vs     = vs
 {-# INLINE bindings #-}
 
--- | Perform a change of variables on bound variables
+-- | Perform a change of variables on bound variables.
 mapBound :: Functor f => (b -> b') -> Scope b f a -> Scope b' f a
 mapBound f (Scope s) = Scope (fmap f' s) where
   f' (B b) = B (f b)
@@ -226,6 +230,7 @@ foldMapScope :: (Foldable f, Monoid r) =>
 foldMapScope f g (Scope s) = foldMap (bifoldMap f (foldMap g)) s
 {-# INLINE foldMapScope #-}
 
+-- | 'traverse_' the bound variables in a 'Scope'.
 traverseBound_ :: (Applicative g, Foldable f) =>
                   (b -> g d) -> Scope b f a -> g ()
 traverseBound_ f (Scope s) = traverse_ f' s
@@ -233,7 +238,7 @@ traverseBound_ f (Scope s) = traverse_ f' s
         f' _     = pure ()
 {-# INLINE traverseBound_ #-}
 
---- | Traverse both the variables bound by this scope and any free variables.
+-- | 'traverse' both the variables bound by this scope and any free variables.
 traverseScope_ :: (Applicative g, Foldable f) =>
                   (b -> g d) -> (a -> g c) -> Scope b f a -> g ()
 traverseScope_ f g (Scope s) = traverse_ (bitraverse_ f (traverse_ g)) s
@@ -253,7 +258,7 @@ mapMScope_ :: (Monad m, Foldable f) =>
 mapMScope_ f g (Scope s) = mapM_ (bimapM_ f (mapM_ g)) s
 {-# INLINE mapMScope_ #-}
 
---- | Traverse both bound and free variables
+-- | Traverse both bound and free variables
 traverseBound :: (Applicative g, Traversable f) =>
                  (b -> g c) -> Scope b f a -> g (Scope c f a)
 traverseBound f (Scope s) = Scope <$> traverse f' s where
@@ -261,13 +266,13 @@ traverseBound f (Scope s) = Scope <$> traverse f' s where
   f' (F a) = pure (F a)
 {-# INLINE traverseBound #-}
 
---- | Traverse both bound and free variables
+-- | Traverse both bound and free variables
 traverseScope :: (Applicative g, Traversable f) =>
                  (b -> g d) -> (a -> g c) -> Scope b f a -> g (Scope d f c)
 traverseScope f g (Scope s) = Scope <$> traverse (bitraverse f (traverse g)) s
 {-# INLINE traverseScope #-}
 
---- | mapM over both bound and free variables
+-- | mapM over both bound and free variables
 mapMBound :: (Monad m, Traversable f) =>
              (b -> m c) -> Scope b f a -> m (Scope c f a)
 mapMBound f (Scope s) = liftM Scope (mapM f' s) where
@@ -275,7 +280,7 @@ mapMBound f (Scope s) = liftM Scope (mapM f' s) where
   f' (F a) = return (F a)
 {-# INLINE mapMBound #-}
 
---- | A 'traverseScope' that can be used when you only have a 'Monad'
+-- | A 'traverseScope' that can be used when you only have a 'Monad'
 -- instance
 mapMScope :: (Monad m, Traversable f) =>
              (b -> m d) -> (a -> m c) -> Scope b f a -> m (Scope d f c)

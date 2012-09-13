@@ -17,7 +17,10 @@ main = getSources >>= \sources -> doctest $
   : sources
 
 getSources :: IO [FilePath]
-getSources = filter (isSuffixOf ".hs") <$> go "examples"
+getSources = do
+  examples <- go "examples"
+  src <- go "src"
+  return $ filter (isSuffixOf ".hs") (examples ++ src)
   where
     go dir = do
       (dirs, files) <- getFilesAndDirectories dir
