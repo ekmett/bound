@@ -150,9 +150,9 @@ test-suite Simple
     ghc-options: -Werror
   build-depends:
     base,
+    bound,
     prelude-extras,
-    transformers,
-    bound
+    transformers
 
 -- Verify the results of the examples
 test-suite doctests
@@ -166,4 +166,5 @@ test-suite doctests
     base,
     directory >= 1.0 && < 1.3,
     doctest   >= 0.9 && < 0.10,
-    filepath
+    filepath,
+    vector    == 0.9.*
