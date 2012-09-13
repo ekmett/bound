@@ -30,7 +30,7 @@ substitute a p w = w >>= \b -> if a == b then p else return b
 
 -- | @'substituteVar' a b w@ replaces a free variable @a@ with another free variable @b@ in @w@.
 --
--- >>> substitute "Alice" "Bob" ["Alice","Bob","Charlie"]
+-- >>> substituteVar "Alice" "Bob" ["Alice","Bob","Charlie"]
 -- ["Bob","Bob","Charlie"]
 substituteVar :: (Functor f, Eq a) => a -> a -> f a -> f a
 substituteVar a p = fmap (\b -> if a == b then p else b)
