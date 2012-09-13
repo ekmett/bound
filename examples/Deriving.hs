@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
-module Exp where
+module Deriving where
 
 import Data.List
 import Data.Foldable
@@ -61,6 +61,9 @@ instance Bound Alt where
 
 data P a = P { pattern :: [a] -> Pat Exp a, bindings :: [a] }
 
+-- |
+-- >>> lam (varp "x") (V "x")
+-- Lam 1 VarP (Scope (V (B 0)))
 varp :: a -> P a
 varp a = P (const VarP) [a]
 
@@ -70,6 +73,9 @@ wildp = P (const WildP) []
 asp :: a -> P a -> P a
 asp a (P p as) = P (\bs -> AsP (p (a:bs))) (a:as)
 
+-- |
+-- >>> lam (conp "Hello" [varp "x", wildp]) (V "y")
+-- Lam 1 (ConP "Hello" [VarP,WildP]) (Scope (V (F (V "y"))))
 conp :: String -> [P a] -> P a
 conp g ps = P (ConP g . go ps) (ps >>= bindings)
   where
@@ -81,6 +87,15 @@ viewp :: Eq a => Exp a -> P a -> P a
 viewp t (P p as) = P (\bs -> ViewP (abstract (`elemIndex` bs) t) (p bs)) as
 
 -- | smart lam constructor
+--
+-- >>> let_ [("x",V "y"),("y",V "x" :@ V "y")] $ lam (varp "z") (V "z" :@ V "y")
+-- Let 2 [Scope (V (B 1)),Scope (V (B 0) :@ V (B 1))] (Scope (Lam 1 VarP (Scope (V (B 0) :@ V (F (V (B 1)))))))
+--
+-- >>> lam (conp "F" [varp "x", viewp (V "x") $ varp "y"]) (V "y")
+-- Lam 2 (ConP "F" [VarP,ViewP (Scope (V (B 0))) VarP]) (Scope (V (B 1)))
+--
+-- >>> lam (conp "F" [varp "x", viewp (V "y") $ varp "y"]) (V "y")
+-- Lam 2 (ConP "F" [VarP,ViewP (Scope (V (F (V "y")))) VarP]) (Scope (V (B 1)))
 lam :: Eq a => P a -> Exp a -> Exp a
 lam (P p as) t = Lam (length as) (p []) (abstract (`elemIndex` as) t)
 
@@ -91,26 +106,11 @@ let_ bs b = Let (length bs) (map (abstr . snd) bs) (abstr b)
         abstr = abstract (`elemIndex` vs)
 
 -- | smart alt constructor
+--
+-- >>> lam (varp "x") $ Case (V "x") [alt (conp "Hello" [varp "z",wildp]) (V "x"), alt (varp "y") (V "y")]
+-- Lam 1 VarP (Scope (Case (V (B 0)) [Alt 1 (ConP "Hello" [VarP,WildP]) (Scope (V (F (V (B 0))))),Alt 1 VarP (Scope (V (B 0)))]))
 alt :: Eq a => P a -> Exp a -> Alt Exp a
 alt (P p as) t = Alt (length as) (p []) (abstract (`elemIndex` as) t)
 
--- >>> let_ [("x",V "y"),("y",V "x" :@ V "y")] $ lam (varp "z") (V "z" :@ V "y")
--- Let 2 [Scope (V (B 1)),Scope (V (B 0) :@ V (B 1))] (Scope (Lam 1 VarP (Scope (V (B 0) :@ V (F (V (B 1)))))))
-
--- >>> lam (varp "x") (V "x")
--- Lam 1 VarP (Scope (V (B 0)))
-
--- >>> lam (conp "Hello" [varp "x", wildp]) (V "y")
--- Lam 1 (ConP "Hello" [VarP,WildP]) (Scope (V (F (V "y"))))
-
--- >>> lam (varp "x") $ Case (V "x") [alt (conp "Hello" [varp "z",wildp]) (V "x"), alt (varp "y") (V "y")]
--- Lam 1 VarP (Scope (Case (V (B 0)) [Alt 1 (ConP "Hello" [VarP,WildP]) (Scope (V (F (V (B 0))))),Alt 1 VarP (Scope (V (B 0)))]))
-
--- view patterns can reference name from earlier in the same scope
--- >>> lam (conp "F" [varp "x", viewp (V "x") $ varp "y"]) (V "y")
--- Lam 2 (ConP "F" [VarP,ViewP (Scope (V (B 0))) VarP]) (Scope (V (B 1)))
-
--- but like in ghc, they refuse to allow references to subsequent bindings in the scope
--- >>> lam (conp "F" [varp "x", viewp (V "y") $ varp "y"]) (V "y")
--- Lam 2 (ConP "F" [VarP,ViewP (Scope (V (F (V "y")))) VarP]) (Scope (V (B 1)))
-
+main :: IO ()
+main = return ()

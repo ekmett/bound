@@ -11,6 +11,7 @@
 ----------------------------------------------------------------------------
 module Bound.Term
   ( substitute
+  , substituteVar
   , isClosed
   , closed
   ) where
@@ -23,6 +24,10 @@ import Prelude hiding (all)
 substitute :: (Monad f, Eq a) => a -> f a -> f a -> f a
 substitute a p w = w >>= \b -> if a == b then p else return b
 {-# INLINE substitute #-}
+
+substituteVar :: (Functor f, Eq a) => a -> a -> f a -> f a
+substituteVar a p = fmap (\b -> if a == b then p else b)
+{-# INLINE substituteVar #-}
 
 -- | If a term has no free variables, you can freely change the type of
 -- free variables it is parameterized on.

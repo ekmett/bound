@@ -123,10 +123,24 @@ library
 
 test-suite Simple
   build-depends:
-    base           >= 4     && < 5,
-    prelude-extras >= 0.2   && < 0.3,
-    transformers   >= 0.2   && < 0.4,
+    base,
+    prelude-extras,
+    transformers,
     bound
   type: exitcode-stdio-1.0
   hs-source-dirs: examples
   main-is: Simple.hs
+
+-- Verify the results of the examples
+test-suite doctests
+  type:    exitcode-stdio-1.0
+  main-is: doctests.hs
+  build-depends:
+    base,
+    directory >= 1.0 && < 1.3,
+    doctest >= 0.9 && <= 0.10,
+    filepath
+  ghc-options: -Wall -threaded
+  if impl(ghc<7.6.1)
+    ghc-options: -Werror
+  hs-source-dirs: tests

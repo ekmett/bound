@@ -27,7 +27,7 @@ data Exp a
 -- | A smart constructor for Lam
 --
 -- >>> lam "y" (lam "x" (V "x" :@ V "y"))
--- Lam (Lam (V (B ()) :@ V (F (V (B ())))))
+-- Lam (Scope (Lam (Scope (V (B ()) :@ V (F (V (B ())))))))
 lam :: Eq a => a -> Exp a -> Exp a
 lam v b = Lam (abstract1 v b)
 
@@ -95,7 +95,7 @@ infixr 0 !
 --
 -- Modified to use recursive let, because we can.
 --
--- >>> nf cooked == lam "false" (lam "true" (V"false"))
+-- >>> nf cooked == true
 -- True
 
 true :: Exp String

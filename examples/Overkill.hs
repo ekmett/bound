@@ -9,7 +9,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE TypeOperators #-}
-module Exp where
+module Overkill where
 
 import Data.Vector as Vector hiding ((++), map)
 import Data.List as List
@@ -189,8 +189,6 @@ instance Bound (Pat b) where
   ViewP e p >>>= f = ViewP (e >>= f) (p >>>= f)
 
 -- ** Pats
-
-
 eqPats :: (Eq1 f, Eq a) => Pats bs f a -> Pats bs' f a -> Bool
 eqPats NilP      NilP      = True
 eqPats (p :> ps) (q :> qs) = eqPat p q && eqPats ps qs
@@ -221,9 +219,7 @@ instance Bound (Pats bs) where
   NilP >>>= _ = NilP
   (p :> ps) >>>= f = (p >>>= f) :> (ps >>>= f)
 
-
 -- ** Path into Pats
-
 eqMPath :: MPath is -> MPath js -> Bool
 eqMPath (H m) (H n) = eqPath m n
 eqMPath (T p) (T q) = eqMPath p q
@@ -244,8 +240,6 @@ instance Show (MPath is) where
 -- instance Read (MPath is)
 
 -- ** Path into Pat
-
-
 eqPath :: Path i -> Path j -> Bool
 eqPath V     V     = True
 eqPath L     L     = True
@@ -282,6 +276,14 @@ instance Show (Path i) where
   showsPrec d (R m) = showParen (d > 10) $ showString "R " . showsPrec 11 m
   showsPrec d (C p) = showParen (d > 10) $ showString "C " . showsPrec 11 p
 
--- ghci> let_ [("x",Var "y"),("y",Var "x" :@ Var "y")] $ lam (varp "z") (Var "z" :@ Var "y")
--- ghci> lam (varp "x") (Var "x")
--- ghci> lam (conp "Hello" [varp "x", wildp])) (Var "y")
+-- |
+-- >>> let_ [("x",Var "y"),("y",Var "x" :@ Var "y")] $ lam (varp "z") (Var "z" :@ Var "y")
+-- Let (fromList [Scope (Var (B 1)),Scope (Var (B 0) :@ Var (B 1))]) (Scope (Lam VarP (Scope (Var (B V) :@ Var (F (Var (B 1)))))))
+--
+-- >>> lam (varp "x") (Var "x")
+-- Lam VarP (Scope (Var (B V)))
+--
+-- >>> lam (conp "Hello" [varp "x", wildp]) (Var "y")
+-- Lam (ConP "Hello" (VarP :> WildP :> NilP)) (Scope (Var (F (Var "y"))))
+main :: IO ()
+main = return ()
