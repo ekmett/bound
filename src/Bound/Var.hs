@@ -1,3 +1,13 @@
+{-# LANGUAGE CPP #-}
+
+#ifdef __GLASGOW_HASKELL__
+{-# LANGUAGE DeriveDataTypeable #-}
+
+# if __GLASGOW_HASKELL__ >= 704
+{-# LANGUAGE DeriveGeneric #-}
+# endif
+
+#endif
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Bound.Var
@@ -13,14 +23,20 @@ module Bound.Var
   ( Var(..)
   ) where
 
+import Control.Applicative
+import Control.Monad (ap)
 import Data.Foldable
 import Data.Traversable
 import Data.Monoid (mempty)
 import Data.Bifunctor
 import Data.Bifoldable
 import Data.Bitraversable
-import Control.Applicative
-import Control.Monad (ap)
+#ifdef __GLASGOW_HASKELL__
+import Data.Data
+# if __GLASGOW_HASKELL__ >= 704
+import GHC.Generics
+# endif
+#endif
 import Prelude.Extras
 
 ----------------------------------------------------------------------------
@@ -36,7 +52,19 @@ import Prelude.Extras
 data Var b a
   = B b -- ^ this is a bound variable
   | F a -- ^ this is a free variable
-  deriving (Eq,Ord,Show,Read)
+  deriving
+  ( Eq
+  , Ord
+  , Show
+  , Read
+#ifdef __GLASGOW_HASKELL__
+  , Data
+  , Typeable
+# if __GLASGOW_HASKELL__ >= 704
+  , Generic
+# endif
+#endif
+  )
 
 ----------------------------------------------------------------------------
 -- Instances

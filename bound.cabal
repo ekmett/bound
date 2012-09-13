@@ -1,6 +1,6 @@
 name:          bound
 category:      Language, Compilers/Interpreters
-version:       0.4.1
+version:       0.5
 license:       BSD3
 cabal-version: >= 1.9.2
 license-file:  LICENSE
@@ -102,6 +102,7 @@ extra-source-files:
   examples/Simple.hs
   examples/Deriving.hs
   examples/Overkill.hs
+  tests/doctests.hs
   README.markdown
   CHANGELOG.markdown
 
@@ -111,41 +112,58 @@ source-repository head
 
 library
   hs-source-dirs: src
-  build-depends:
-    base           >= 4     && < 5,
-    bifunctors     >= 0.1.3 && < 0.2,
-    prelude-extras >= 0.2   && < 0.3,
-    transformers   >= 0.2   && < 0.4
 
   exposed-modules:
     Bound
     Bound.Class
+    Bound.Name
     Bound.Scope
     Bound.Term
     Bound.Var
 
-  ghc-options: -Wall -O2 -fspec-constr -fdicts-cheap
+  build-depends:
+    base           >= 4   && < 5,
+    bifunctors     == 3.0.*,
+    comonad        == 3.0.*,
+    prelude-extras >= 0.2 && < 0.3,
+    transformers   >= 0.2 && < 0.4
+
+  ghc-options: -Wall -O2 -fspec-constr -fdicts-cheap -funbox-strict-fields
+  if impl(ghc>=7.4)
+    build-depends: ghc-prim
+
+-- Stating these, despite being more correct, causes spurious warnings to
+-- end-users of older Cabal versions, so we don't.
+
+--  other-extensions: CPP
+--  if impl(ghc)
+--    other-extensions: DeriveDataTypeable
+--  if impl(ghc>=7.4)
+--    other-extensions: DeriveGeneric DefaultSignatures
 
 test-suite Simple
+  type: exitcode-stdio-1.0
+  main-is: Simple.hs
+  hs-source-dirs: examples
+  ghc-options -Wall -threaded
+  if impl(ghc<7.6.1)
+    ghc-options: -Werror
   build-depends:
     base,
     prelude-extras,
     transformers,
     bound
-  type: exitcode-stdio-1.0
-  hs-source-dirs: examples
-  main-is: Simple.hs
 
 -- Verify the results of the examples
 test-suite doctests
   type:    exitcode-stdio-1.0
   main-is: doctests.hs
-  build-depends:
-    base,
-    directory >= 1.0 && < 1.3,
-    doctest >= 0.9 && <= 0.10,
-    filepath
+  hs-source-dirs: tests
   ghc-options: -Wall -threaded
   if impl(ghc<7.6.1)
     ghc-options: -Werror
-  hs-source-dirs: tests
+  build-depends:
+    base,
+    directory >= 1.0 && < 1.3,
+    doctest   >= 0.9 && < 0.10,
+    filepath

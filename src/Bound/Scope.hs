@@ -178,7 +178,7 @@ instantiate k e = unscope e >>= \v -> case v of
 --
 -- >>> instantiate1 "x" $ Scope [B (),F "y",F "z"]
 -- "xyz"
-instantiate1 :: Monad f => f a -> Scope () f a -> f a
+instantiate1 :: Monad f => f a -> Scope n f a -> f a
 instantiate1 e = instantiate (const e)
 {-# INLINE instantiate1 #-}
 

@@ -64,6 +64,9 @@
 -- More exotic combinators for manipulating a 'Scope' can be imported from
 -- "Bound.Scope".
 --
+-- You can also retain names in your bound variables by using 'Bound.Name.Name'
+-- and the related combinators from "Bound.Name". They are not re-exported
+-- from this module by default.
 ----------------------------------------------------------------------------
 module Bound
   (
