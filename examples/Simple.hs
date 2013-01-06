@@ -1,7 +1,7 @@
 module Main where
 
 -- this is a simple example where lambdas only bind a single variable at a time
--- this directly corresponds to the usual de bruijn presentation
+-- this directly corre:sponds to the usual de bruijn presentation
 
 import Data.List (elemIndex)
 import Data.Foldable hiding (notElem)
@@ -30,7 +30,6 @@ data Exp a
 -- Lam (Scope (Lam (Scope (V (B ()) :@ V (F (V (B ())))))))
 lam :: Eq a => a -> Exp a -> Exp a
 lam v b = Lam (abstract1 v b)
-
 
 -- | A smart constructor for Let bindings
 

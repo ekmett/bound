@@ -1,6 +1,6 @@
 name:          bound
 category:      Language, Compilers/Interpreters
-version:       0.5.0.2
+version:       0.5.1
 license:       BSD3
 cabal-version: >= 1.9.2
 license-file:  LICENSE
@@ -11,6 +11,7 @@ homepage:      http://github.com/ekmett/bound/
 bug-reports:   http://github.com/ekmett/bound/issues
 copyright:     Copyright (C) 2012 Edward A. Kmett
 synopsis:      Making de Bruijn Succ Less
+build-type:    Custom
 description:
    We represent the target language itself as an ideal monad supplied by the
    user, and provide a 'Scope' monad transformer for introducing bound variables
@@ -32,7 +33,6 @@ description:
    structure we permit easy simultaneous substitution and further speed up 
    instantiation.
 
-build-type:    Simple
 extra-source-files:
   .travis.yml
   examples/Simple.hs
@@ -58,10 +58,10 @@ library
     Bound.Var
 
   build-depends:
-    base           >= 4   && < 5,
-    bifunctors     == 3.0.*,
-    comonad        == 3.0.*,
-    prelude-extras >= 0.2 && < 0.3,
+    base           >= 4 && < 5,
+    bifunctors     >= 3,
+    comonad        >= 3,
+    prelude-extras >= 0.2,
     transformers   >= 0.2 && < 0.4
 
   ghc-options: -Wall -O2 -fspec-constr -fdicts-cheap -funbox-strict-fields
