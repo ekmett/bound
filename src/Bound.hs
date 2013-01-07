@@ -33,10 +33,10 @@
 -- @
 --
 -- @
--- instance 'Prelude.Extras.Eq1' Exp   where ('Prelude.Extras.==#')      = ('==')
--- instance 'Prelude.Extras.Ord1' Exp  where 'Prelude.Extras.compare1'   = 'compare'
--- instance 'Prelude.Extras.Show1' Exp where 'Prelude.Extras.showsPrec1' = 'showsPrec'
--- instance 'Prelude.Extras.Read1' Exp where 'Prelude.Extras.readsPrec1' = 'readsPrec'
+-- instance 'Prelude.Extras.Eq1' Exp
+-- instance 'Prelude.Extras.Ord1' Exp
+-- instance 'Prelude.Extras.Show1' Exp
+-- instance 'Prelude.Extras.Read1' Exp
 -- instance 'Control.Applicative.Applicative' Exp where 'Control.Applicative.pure' = V; ('<*>') = 'Control.Monad.ap'
 -- @
 --

@@ -31,10 +31,10 @@ instance Monad Exp where
   Let n bs e >>= f = Let n (map (>>>= f) bs) (e >>>= f)
   Case e as  >>= f = Case (e >>= f) (map (>>>= f) as)
 
-instance Eq1   Exp where (==#) = (==)
-instance Ord1  Exp where compare1 = compare
-instance Show1 Exp where showsPrec1 = showsPrec
-instance Read1 Exp where readsPrec1 = readsPrec
+instance Eq1   Exp
+instance Ord1  Exp
+instance Show1 Exp
+instance Read1 Exp
 
 data Pat f a
   = VarP
