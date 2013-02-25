@@ -86,36 +86,44 @@ newtype Scope b f a = Scope { unscope :: f (Var b (f a)) }
 
 instance Functor f => Functor (Scope b f) where
   fmap f (Scope a) = Scope (fmap (fmap (fmap f)) a)
+  {-# INLINE fmap #-}
 
 -- | @'toList'@ is provides a list (with duplicates) of the free variables
 instance Foldable f => Foldable (Scope b f) where
   foldMap f (Scope a) = foldMap (foldMap (foldMap f)) a
+  {-# INLINE foldMap #-}
 
 instance Traversable f => Traversable (Scope b f) where
   traverse f (Scope a) = Scope <$> traverse (traverse (traverse f)) a
+  {-# INLINE traverse #-}
 
 -- | The monad permits substitution on free variables, while preserving
 -- bound variables
 instance Monad f => Monad (Scope b f) where
   return a = Scope (return (F (return a)))
+  {-# INLINE return #-}
   Scope e >>= f = Scope $ e >>= \v -> case v of
     B b -> return (B b)
     F ea -> ea >>= unscope . f
+  {-# INLINE (>>=) #-}
 
 instance MonadTrans (Scope b) where
   lift m = Scope (return (F m))
+  {-# INLINE lift #-}
 
 instance (Monad f, Eq b, Eq1 f, Eq a) => Eq  (Scope b f a) where
   (==) = (==#)
+  {-# INLINE (==) #-}
 instance (Monad f, Eq b, Eq1 f)       => Eq1 (Scope b f)   where
   a ==# b = liftM Lift2 (fromScope a) ==# liftM Lift2 (fromScope b)
-  -- a ==# b = mangleScope a ==# mangleScope b
+  {-# INLINE (==#) #-}
 
 instance (Monad f, Ord b, Ord1 f, Ord a) => Ord  (Scope b f a) where
   compare = compare1
+  {-# INLINE compare #-}
 instance (Monad f, Ord b, Ord1 f)        => Ord1 (Scope b f) where
   compare1 a b = liftM Lift2 (fromScope a) `compare1` liftM Lift2 (fromScope b)
-  -- compare1 a b = compare1 (mangleScope a) (mangleScope b)
+  {-# INLINE compare1 #-}
 
 instance (Functor f, Show b, Show1 f, Show a) => Show (Scope b f a) where
   showsPrec = showsPrec1
@@ -133,6 +141,7 @@ instance (Functor f, Read b, Read1 f)         => Read1 (Scope b f) where
 
 instance Bound (Scope b) where
   Scope m >>>= f = Scope (liftM (fmap (>>= f)) m)
+  {-# INLINE (>>>=) #-}
 
 -------------------------------------------------------------------------------
 -- Abstraction
