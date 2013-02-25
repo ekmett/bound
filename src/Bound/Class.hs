@@ -47,6 +47,7 @@ class Bound t where
   default (>>>=) :: (MonadTrans t, Monad f, Monad (t f)) =>
                     t f a -> (a -> f c) -> t f c
   m >>>= f = m >>= lift . f
+  {-# INLINE (>>>=) #-}
 #endif
 
 infixr 1 =<<<
@@ -55,3 +56,4 @@ infixr 1 =<<<
 -- @('=<<<') = 'flip' ('>>>=')@
 (=<<<) :: (Bound t, Monad f) => (a -> f c) -> t f a -> t f c
 (=<<<) = flip (>>>=)
+{-# INLINE (=<<<) #-}

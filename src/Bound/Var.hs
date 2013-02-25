@@ -81,6 +81,7 @@ unvar _ g (F a) = g a
 -- @
 _B :: (Choice p, Applicative f) => p b (f b') -> p (Var b a) (f (Var b' a))
 _B = dimap (unvar Right (Left . F)) (either pure (fmap B)) . right'
+{-# INLINE _B #-}
 
 -- |
 -- This provides a @Prism@ that can be used with @lens@ library to access a free 'Var'.
@@ -90,6 +91,7 @@ _B = dimap (unvar Right (Left . F)) (either pure (fmap B)) . right'
 -- @
 _F :: (Choice p, Applicative f) => p a (f a') -> p (Var b a) (f (Var b a'))
 _F = dimap (unvar (Left . B) Right) (either pure (fmap F)) . right'
+{-# INLINE _F #-}
 
 ----------------------------------------------------------------------------
 -- Instances
@@ -98,42 +100,60 @@ _F = dimap (unvar (Left . B) Right) (either pure (fmap F)) . right'
 instance Functor (Var b) where
   fmap _ (B b) = B b
   fmap f (F a) = F (f a)
+  {-# INLINE fmap #-}
 
 instance Foldable (Var b) where
   foldMap f (F a) = f a
   foldMap _ _ = mempty
+  {-# INLINE foldMap #-}
 
 instance Traversable (Var b) where
   traverse f (F a) = F <$> f a
   traverse _ (B b) = pure (B b)
+  {-# INLINE traverse #-}
 
 instance Applicative (Var b) where
   pure = F
+  {-# INLINE pure #-}
   (<*>) = ap
+  {-# INLINE (<*>) #-}
 
 instance Monad (Var b) where
   return = F
-  F a  >>= f = f a
+  {-# INLINE return #-}
+  F a >>= f = f a
   B b >>= _ = B b
+  {-# INLINE (>>=) #-}
 
 instance Bifunctor Var where
   bimap f _ (B b) = B (f b)
   bimap _ g (F a) = F (g a)
+  {-# INLINE bimap #-}
 
 instance Bifoldable Var where
   bifoldMap f _ (B b) = f b
   bifoldMap _ g (F a) = g a
+  {-# INLINE bifoldMap #-}
 
 instance Bitraversable Var where
   bitraverse f _ (B b) = B <$> f b
   bitraverse _ g (F a) = F <$> g a
+  {-# INLINE bitraverse #-}
 
-instance Eq2 Var   where (==##)     = (==)
-instance Ord2 Var  where compare2   = compare
+instance Eq2 Var   where
+  (==##)     = (==)
+  {-# INLINE (==##) #-}
+instance Ord2 Var  where
+  compare2   = compare
+  {-# INLINE compare2 #-}
 instance Show2 Var where showsPrec2 = showsPrec
 instance Read2 Var where readsPrec2  = readsPrec
 
-instance Eq b   => Eq1   (Var b) where (==#)      = (==)
-instance Ord b  => Ord1  (Var b) where compare1   = compare
+instance Eq b   => Eq1   (Var b) where
+  (==#)      = (==)
+  {-# INLINE (==#) #-}
+instance Ord b  => Ord1  (Var b) where
+  compare1   = compare
+  {-# INLINE compare1 #-}
 instance Show b => Show1 (Var b) where showsPrec1 = showsPrec
 instance Read b => Read1 (Var b) where readsPrec1  = readsPrec
