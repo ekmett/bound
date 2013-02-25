@@ -1,3 +1,13 @@
+0.6.1
+-----
+* More aggressive inlining
+* Added `unvar`, `_B`, `_F` to `Bound.Var`.
+* Added `_Name` to `Bound.Name`.
+
+0.6
+---
+* Support for `prelude-extras` 0.3
+
 0.5.1
 -----
 * Removed my personal inter-package dependency upper bounds
