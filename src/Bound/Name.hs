@@ -30,6 +30,7 @@
 ----------------------------------------------------------------------------
 module Bound.Name
   ( Name(..)
+  , _Name
   , name
   , abstractName
   , abstract1Name
@@ -39,6 +40,9 @@ module Bound.Name
 
 import Bound.Scope
 import Bound.Var
+import Control.Applicative
+import Control.Comonad
+import Control.Monad (liftM)
 import Data.Foldable
 import Data.Traversable
 import Data.Monoid
@@ -51,9 +55,7 @@ import Data.Data
 import GHC.Generics
 # endif
 #endif
-import Control.Applicative
-import Control.Comonad
-import Control.Monad (liftM)
+import Data.Profunctor
 import Prelude.Extras
 
 -------------------------------------------------------------------------------
@@ -80,6 +82,16 @@ data Name n b = Name n b deriving
 -- | Extract the 'name'.
 name :: Name n b -> n
 name (Name n _) = n
+
+-- |
+--
+-- This provides an 'Iso' that can be used to access the parts of a 'Name'.
+--
+-- @
+-- '_Name' :: Iso ('Name' n a) ('Name' m b) (n, a) (m, b)
+-- @
+_Name :: (Profunctor p, Functor f) => p (n, a) (f (m,b)) -> p (Name n a) (f (Name m b))
+_Name = dimap (\(Name n a) -> (n, a)) (fmap (uncurry Name))
 
 -------------------------------------------------------------------------------
 -- Instances
