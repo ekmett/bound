@@ -21,6 +21,7 @@
 ----------------------------------------------------------------------------
 module Bound.Var
   ( Var(..)
+  , unvar
   ) where
 
 import Control.Applicative
@@ -37,6 +38,7 @@ import Data.Data
 import GHC.Generics
 # endif
 #endif
+import Data.Profunctor
 import Prelude.Extras
 
 ----------------------------------------------------------------------------
@@ -65,6 +67,29 @@ data Var b a
 # endif
 #endif
   )
+
+unvar :: (b -> r) -> (a -> r) -> Var b a -> r
+unvar f _ (B b) = f b
+unvar _ g (F a) = g a
+{-# INLINE unvar #-}
+
+-- |
+-- This provides a @Prism@ that can be used with @lens@ library to access a bound 'Var'.
+--
+-- @
+-- '_B' :: 'Prism' (Var b a) (Var b' a) b b'@
+-- @
+_B :: (Choice p, Applicative f) => p b (f b') -> p (Var b a) (f (Var b' a))
+_B = dimap (unvar Right (Left . F)) (either pure (fmap B)) . right'
+
+-- |
+-- This provides a @Prism@ that can be used with @lens@ library to access a free 'Var'.
+--
+-- @
+-- '_F' :: 'Prism' (Var b a) (Var b a') a a'@
+-- @
+_F :: (Choice p, Applicative f) => p a (f a') -> p (Var b a) (f (Var b a'))
+_F = dimap (unvar (Left . B) Right) (either pure (fmap F)) . right'
 
 ----------------------------------------------------------------------------
 -- Instances
