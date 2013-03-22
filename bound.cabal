@@ -35,10 +35,15 @@ description:
 
 extra-source-files:
   .travis.yml
+  .ghci
+  .gitignore
+  .vim.custom
   examples/Simple.hs
   examples/Deriving.hs
   examples/Overkill.hs
   tests/doctests.hs
+  travis/cabal-apt-install
+  travis/config
   README.markdown
   CHANGELOG.markdown
 
@@ -71,15 +76,6 @@ library
   if impl(ghc>=7.4)
     build-depends: ghc-prim
 
--- Stating these, despite being more correct, causes spurious warnings to
--- end-users of older Cabal versions, so we don't.
-
---  other-extensions: CPP
---  if impl(ghc)
---    other-extensions: DeriveDataTypeable
---  if impl(ghc>=7.4)
---    other-extensions: DeriveGeneric DefaultSignatures
-
 test-suite Simple
   type: exitcode-stdio-1.0
   main-is: Simple.hs
@@ -93,7 +89,6 @@ test-suite Simple
     prelude-extras,
     transformers
 
--- Verify the results of the examples
 test-suite doctests
   type:    exitcode-stdio-1.0
   main-is: doctests.hs
