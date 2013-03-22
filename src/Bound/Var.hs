@@ -29,6 +29,8 @@ import Control.Monad (ap)
 import Data.Foldable
 import Data.Traversable
 import Data.Monoid (mempty)
+import Data.Hashable
+import Data.Hashable.Extras
 import Data.Bifunctor
 import Data.Bifoldable
 import Data.Bitraversable
@@ -39,6 +41,7 @@ import GHC.Generics
 # endif
 #endif
 import Data.Profunctor
+import Data.Word
 import Prelude.Extras
 
 ----------------------------------------------------------------------------
@@ -67,6 +70,16 @@ data Var b a
 # endif
 #endif
   )
+
+distinguisher :: Int
+distinguisher = fromIntegral $ (maxBound :: Word) `quot` 3
+
+instance Hashable2 Var
+instance Hashable b => Hashable1 (Var b)
+instance (Hashable b, Hashable a) => Hashable (Var b a) where
+  hashWithSalt s (B b) = hashWithSalt s b
+  hashWithSalt s (F a) = hashWithSalt s a `hashWithSalt` distinguisher
+  {-# INLINE hashWithSalt #-}
 
 unvar :: (b -> r) -> (a -> r) -> Var b a -> r
 unvar f _ (B b) = f b

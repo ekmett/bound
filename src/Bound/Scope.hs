@@ -50,6 +50,8 @@ import Data.Bifunctor
 import Data.Bifoldable
 import Data.Bitraversable
 import Data.Foldable
+import Data.Hashable
+import Data.Hashable.Extras
 import Data.Monoid
 import Data.Traversable
 import Prelude.Extras
@@ -142,6 +144,14 @@ instance (Functor f, Read b, Read1 f)         => Read1 (Scope b f) where
 instance Bound (Scope b) where
   Scope m >>>= f = Scope (liftM (fmap (>>= f)) m)
   {-# INLINE (>>>=) #-}
+
+instance (Hashable b, Monad f, Hashable1 f) => Hashable1 (Scope b f) where
+  hashWithSalt1 n m = hashWithSalt1 n (fromScope m)
+  {-# INLINE hashWithSalt1 #-}
+
+instance (Hashable b, Monad f, Hashable1 f, Hashable a) => Hashable (Scope b f a) where
+  hashWithSalt n m = hashWithSalt1 n (fromScope m)
+  {-# INLINE hashWithSalt #-}
 
 -------------------------------------------------------------------------------
 -- Abstraction

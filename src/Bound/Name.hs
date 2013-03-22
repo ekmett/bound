@@ -55,6 +55,8 @@ import Data.Data
 import GHC.Generics
 # endif
 #endif
+import Data.Hashable
+import Data.Hashable.Extras
 import Data.Profunctor
 import Prelude.Extras
 
@@ -102,6 +104,18 @@ _Name = dimap (\(Name n a) -> (n, a)) (fmap (uncurry Name))
 instance Eq b => Eq (Name n b) where
   Name _ a == Name _ b = a == b
   {-# INLINE (==) #-}
+
+instance Hashable2 Name where
+  hashWithSalt2 m (Name _ a) = hashWithSalt m a
+  {-# INLINE hashWithSalt2 #-}
+
+instance Hashable1 (Name n) where
+  hashWithSalt1 m (Name _ a) = hashWithSalt m a
+  {-# INLINE hashWithSalt1 #-}
+
+instance Hashable a => Hashable (Name n a) where
+  hashWithSalt m (Name _ a) = hashWithSalt m a
+  {-# INLINE hashWithSalt #-}
 
 instance Ord b => Ord (Name n b) where
   Name _ a `compare` Name _ b = compare a b

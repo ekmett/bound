@@ -19,10 +19,10 @@ See [the documentation](http://hackage.haskell.org/package/bound) on hackage for
      data Exp a = V a | Exp a :@ Exp a | Lam (Scope () Exp a)
        deriving (Eq,Ord,Show,Read,Functor,Foldable,Traversable)
 
-     instance Eq1 Exp   where (==#)      = (==)
-     instance Ord1 Exp  where compare1   = compare
-     instance Show1 Exp where showsPrec1 = showsPrec
-     instance Read1 Exp where readsPrec1 = readsPrec
+     instance Eq1 Exp
+     instance Ord1 Exp
+     instance Show1 Exp
+     instance Read1 Exp
      instance Applicative Exp where pure = V; (<*>) = ap
 
      instance Monad Exp where
