@@ -1,3 +1,7 @@
+0.7
+---
+* Added `Hashable`, `Hashable1` and `Hashable2` instances where appropriate for `Name`, `Var` and `Scope`.
+
 0.6.1
 -----
 * More aggressive inlining
