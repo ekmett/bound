@@ -1,7 +1,7 @@
 module Main where
 
 -- this is a simple example where lambdas only bind a single variable at a time
--- this directly corre:sponds to the usual de bruijn presentation
+-- this directly corresponds to the usual de bruijn presentation
 
 import Data.List (elemIndex)
 import Data.Foldable hiding (notElem)
