@@ -39,6 +39,8 @@ module Bound.Scope
   , traverseScope
   , mapMBound
   , mapMScope
+  , serializeScope
+  , deserializeScope
   ) where
 
 import Bound.Class
@@ -48,11 +50,18 @@ import Control.Monad hiding (mapM, mapM_)
 import Control.Monad.Trans.Class
 import Data.Bifunctor
 import Data.Bifoldable
+import qualified Data.Binary as Binary
+import Data.Binary (Binary)
 import Data.Bitraversable
+import Data.Bytes.Get
+import Data.Bytes.Put
+import Data.Bytes.Serial
 import Data.Foldable
 import Data.Hashable
 import Data.Hashable.Extras
 import Data.Monoid
+import qualified Data.Serialize as Serialize
+import Data.Serialize (Serialize)
 import Data.Traversable
 import Prelude.Extras
 import Prelude hiding (foldr, mapM, mapM_)
@@ -346,3 +355,27 @@ mapMScope :: (Monad m, Traversable f) =>
              (b -> m d) -> (a -> m c) -> Scope b f a -> m (Scope d f c)
 mapMScope f g (Scope s) = liftM Scope (mapM (bimapM f (mapM g)) s)
 {-# INLINE mapMScope #-}
+
+serializeScope :: (Serial1 f, MonadPut m) => (b -> m ()) -> (v -> m ()) -> Scope b f v -> m ()
+serializeScope pb pv (Scope body) = serializeWith (serializeWith2 pb $ serializeWith pv) body
+{-# INLINE serializeScope #-}
+
+deserializeScope :: (Serial1 f, MonadGet m) => m b -> m v -> m (Scope b f v)
+deserializeScope gb gv = liftM Scope $ deserializeWith (deserializeWith2 gb $ deserializeWith gv)
+{-# INLINE deserializeScope #-}
+
+instance (Serial b, Serial1 f) => Serial1 (Scope b f) where
+  serializeWith = serializeScope serialize
+  deserializeWith = deserializeScope deserialize
+
+instance (Serial b, Serial1 f, Serial a) => Serial (Scope b f a) where
+  serialize = serializeScope serialize serialize
+  deserialize = deserializeScope deserialize deserialize
+
+instance (Binary b, Serial1 f, Binary a) => Binary (Scope b f a) where
+  put = serializeScope Binary.put Binary.put
+  get = deserializeScope Binary.get Binary.get
+
+instance (Serialize b, Serial1 f, Serialize a) => Serialize (Scope b f a) where
+  put = serializeScope Serialize.put Serialize.put
+  get = deserializeScope Serialize.get Serialize.get

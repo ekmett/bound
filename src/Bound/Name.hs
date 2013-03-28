@@ -42,13 +42,16 @@ import Bound.Scope
 import Bound.Var
 import Control.Applicative
 import Control.Comonad
-import Control.Monad (liftM)
+import Control.Monad (liftM, liftM2)
 import Data.Foldable
 import Data.Traversable
 import Data.Monoid
 import Data.Bifunctor
 import Data.Bifoldable
+import qualified Data.Binary as Binary
+import Data.Binary (Binary)
 import Data.Bitraversable
+import Data.Bytes.Serial
 #ifdef __GLASGOW_HASKELL__
 import Data.Data
 # if __GLASGOW_HASKELL__ >= 704
@@ -58,6 +61,8 @@ import GHC.Generics
 import Data.Hashable
 import Data.Hashable.Extras
 import Data.Profunctor
+import qualified Data.Serialize as Serialize
+import Data.Serialize (Serialize)
 import Prelude.Extras
 
 -------------------------------------------------------------------------------
@@ -169,6 +174,33 @@ instance Ord2 Name  where
   {-# INLINE compare2 #-}
 instance Show2 Name where showsPrec2 = showsPrec
 instance Read2 Name where readsPrec2  = readsPrec
+
+instance Serial2 Name where
+  serializeWith2 pb pf (Name b a) = pb b >> pf a
+  {-# INLINE serializeWith2 #-}
+
+  deserializeWith2 gb gf = liftM2 Name gb gf
+  {-# INLINE deserializeWith2 #-}
+
+instance Serial b => Serial1 (Name b) where
+  serializeWith = serializeWith2 serialize
+  {-# INLINE serializeWith #-}
+  deserializeWith = deserializeWith2 deserialize
+  {-# INLINE deserializeWith #-}
+
+instance (Serial b, Serial a) => Serial (Name b a) where
+  serialize = serializeWith2 serialize serialize
+  {-# INLINE serialize #-}
+  deserialize = deserializeWith2 deserialize deserialize
+  {-# INLINE deserialize #-}
+
+instance (Binary b, Binary a) => Binary (Name b a) where
+  put = serializeWith2 Binary.put Binary.put
+  get = deserializeWith2 Binary.get Binary.get
+
+instance (Serialize b, Serialize a) => Serialize (Name b a) where
+  put = serializeWith2 Serialize.put Serialize.put
+  get = deserializeWith2 Serialize.get Serialize.get
 
 -------------------------------------------------------------------------------
 -- Abstraction
