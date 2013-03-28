@@ -346,4 +346,3 @@ mapMScope :: (Monad m, Traversable f) =>
              (b -> m d) -> (a -> m c) -> Scope b f a -> m (Scope d f c)
 mapMScope f g (Scope s) = liftM Scope (mapM (bimapM f (mapM g)) s)
 {-# INLINE mapMScope #-}
-

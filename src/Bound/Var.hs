@@ -25,7 +25,7 @@ module Bound.Var
   ) where
 
 import Control.Applicative
-import Control.Monad (ap)
+import Control.Monad (liftM, ap)
 import Data.Foldable
 import Data.Traversable
 import Data.Monoid (mempty)
@@ -33,7 +33,12 @@ import Data.Hashable
 import Data.Hashable.Extras
 import Data.Bifunctor
 import Data.Bifoldable
+import qualified Data.Binary as Binary
+import Data.Binary (Binary)
 import Data.Bitraversable
+import Data.Bytes.Get
+import Data.Bytes.Put
+import Data.Bytes.Serial
 #ifdef __GLASGOW_HASKELL__
 import Data.Data
 # if __GLASGOW_HASKELL__ >= 704
@@ -41,6 +46,8 @@ import GHC.Generics
 # endif
 #endif
 import Data.Profunctor
+import qualified Data.Serialize as Serialize
+import Data.Serialize (Serialize)
 import Data.Word
 import Prelude.Extras
 
@@ -80,6 +87,37 @@ instance (Hashable b, Hashable a) => Hashable (Var b a) where
   hashWithSalt s (B b) = hashWithSalt s b
   hashWithSalt s (F a) = hashWithSalt s a `hashWithSalt` distinguisher
   {-# INLINE hashWithSalt #-}
+
+instance Serial2 Var where
+  serializeWith2 pb _  (B b) = putWord8 0 >> pb b
+  serializeWith2 _  pf (F f) = putWord8 1 >> pf f
+  {-# INLINE serializeWith2 #-}
+
+  deserializeWith2 gb gf = getWord8 >>= \b -> case b of
+    0 -> liftM B gb
+    1 -> liftM F gf
+    _ -> fail $ "getVar: Unexpected constructor code: " ++ show b
+  {-# INLINE deserializeWith2 #-}
+
+instance Serial b => Serial1 (Var b) where
+  serializeWith = serializeWith2 serialize
+  {-# INLINE serializeWith #-}
+  deserializeWith = deserializeWith2 deserialize
+  {-# INLINE deserializeWith #-}
+
+instance (Serial b, Serial a) => Serial (Var b a) where
+  serialize = serializeWith2 serialize serialize
+  {-# INLINE serialize #-}
+  deserialize = deserializeWith2 deserialize deserialize
+  {-# INLINE deserialize #-}
+
+instance (Binary b, Binary a) => Binary (Var b a) where
+  put = serializeWith2 Binary.put Binary.put
+  get = deserializeWith2 Binary.get Binary.get
+
+instance (Serialize b, Serialize a) => Serialize (Var b a) where
+  put = serializeWith2 Serialize.put Serialize.put
+  get = deserializeWith2 Serialize.get Serialize.get
 
 unvar :: (b -> r) -> (a -> r) -> Var b a -> r
 unvar f _ (B b) = f b
