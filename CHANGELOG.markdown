@@ -1,3 +1,7 @@
+0.8
+---
+* Added `Serial`, `Binary` and `Serialize` instances for `Scope`.
+
 0.7
 ---
 * Added `Hashable`, `Hashable1` and `Hashable2` instances where appropriate for `Name`, `Var` and `Scope`.
