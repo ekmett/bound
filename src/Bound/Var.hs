@@ -22,6 +22,8 @@
 module Bound.Var
   ( Var(..)
   , unvar
+  , _B
+  , _F
   ) where
 
 import Control.Applicative
