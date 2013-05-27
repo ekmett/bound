@@ -179,7 +179,7 @@ instance Serial2 Name where
   serializeWith2 pb pf (Name b a) = pb b >> pf a
   {-# INLINE serializeWith2 #-}
 
-  deserializeWith2 gb gf = liftM2 Name gb gf
+  deserializeWith2 = liftM2 Name
   {-# INLINE deserializeWith2 #-}
 
 instance Serial b => Serial1 (Name b) where
