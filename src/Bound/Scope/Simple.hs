@@ -167,7 +167,7 @@ instance (Hashable b, Monad f, Hashable1 f, Hashable a) => Hashable (Scope b f a
 --
 -- >>> :m + Data.List
 -- >>> abstract (`elemIndex` "bar") "barry"
--- Scope [B 0,B 1,B 2,B 2,F "y"]
+-- Scope [B 0,B 1,B 2,B 2,F 'y']
 abstract :: Functor f => (a -> Maybe b) -> f a -> Scope b f a
 abstract f e = Scope (fmap k e) where
   k y = case f y of
@@ -178,7 +178,7 @@ abstract f e = Scope (fmap k e) where
 -- | Abstract over a single variable
 --
 -- >>> abstract1 'x' "xyz"
--- Scope [B (),F "y",F "z"]
+-- Scope [B (),F 'y',F 'z']
 abstract1 :: (Functor f, Eq a) => a -> f a -> Scope () f a
 abstract1 a = abstract (\b -> if a == b then Just () else Nothing)
 {-# INLINE abstract1 #-}
@@ -200,7 +200,7 @@ instantiate k e = unscope e >>= \v -> case v of
 
 -- | Enter a 'Scope' that binds one variable, instantiating it
 --
--- >>> instantiate1 "x" $ Scope [B (),F "y",F "z"]
+-- >>> instantiate1 "x" $ Scope [B (),F 'y',F 'z']
 -- "xyz"
 instantiate1 :: Monad f => f a -> Scope n f a -> f a
 instantiate1 e = instantiate (const e)
