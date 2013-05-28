@@ -23,7 +23,7 @@
 -- import Control.Monad ('Control.Monad.ap')
 -- import Prelude.Extras
 -- import Data.Foldable
--- import Data.Traverable
+-- import Data.Traversable
 -- @
 --
 -- @
