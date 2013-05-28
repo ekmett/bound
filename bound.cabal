@@ -46,6 +46,7 @@ extra-source-files:
   travis/config
   README.markdown
   CHANGELOG.markdown
+  AUTHORS.markdown
 
 source-repository head
   type: git
@@ -59,6 +60,7 @@ library
     Bound.Class
     Bound.Name
     Bound.Scope
+    Bound.Scope.Simple
     Bound.Term
     Bound.Var
 
