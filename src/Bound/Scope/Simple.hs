@@ -1,6 +1,10 @@
+{-# LANGUAGE CPP #-}
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
+{-# LANGUAGE Trustworthy #-}
+#endif
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Bound.Scope
+-- Module      :  Bound.Scope.Simple
 -- Copyright   :  (C) 2013 Edward Kmett
 -- License     :  BSD-style (see the file LICENSE)
 --
