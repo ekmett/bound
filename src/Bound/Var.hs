@@ -3,9 +3,13 @@
 #ifdef __GLASGOW_HASKELL__
 {-# LANGUAGE DeriveDataTypeable #-}
 
-# if __GLASGOW_HASKELL__ >= 704
+#if __GLASGOW_HASKELL__ >= 704
 {-# LANGUAGE DeriveGeneric #-}
-# endif
+#endif
+
+#if __GLASGOW_HASKELL__ >= 702
+{-# LANGUAGE Trustworthy #-}
+#endif
 
 #endif
 -----------------------------------------------------------------------------
