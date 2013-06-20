@@ -1,6 +1,6 @@
 name:          bound
 category:      Language, Compilers/Interpreters
-version:       0.8
+version:       0.8.1
 license:       BSD3
 cabal-version: >= 1.9.2
 license-file:  LICENSE

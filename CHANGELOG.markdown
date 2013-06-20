@@ -1,3 +1,7 @@
+0.8.1
+-----
+* SafeHaskell support
+
 0.8
 ---
 * Added `Serial`, `Binary` and `Serialize` instances for `Scope`.
