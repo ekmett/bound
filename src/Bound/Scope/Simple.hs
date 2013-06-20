@@ -4,7 +4,6 @@
 #endif
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Bound.Scope.Simple
 -- Copyright   :  (C) 2013 Edward Kmett
 -- License     :  BSD-style (see the file LICENSE)
 --

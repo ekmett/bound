@@ -1,6 +1,5 @@
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Bound.Term
 -- Copyright   :  (C) 2012 Edward Kmett
 -- License     :  BSD-style (see the file LICENSE)
 --
