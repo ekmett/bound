@@ -123,21 +123,21 @@ instance (Functor f, Eq b, Eq1 f, Eq a) => Eq  (Scope b f a) where
   (==) = (==#)
   {-# INLINE (==) #-}
 instance (Functor f, Eq b, Eq1 f)       => Eq1 (Scope b f)   where
-  a ==# b = fmap Lift2 (unscope a) ==# fmap Lift2 (unscope b)
+  a ==# b = unscope a ==# unscope b
   {-# INLINE (==#) #-}
 
 instance (Functor f, Ord b, Ord1 f, Ord a) => Ord  (Scope b f a) where
   compare = compare1
   {-# INLINE compare #-}
 instance (Functor f, Ord b, Ord1 f)        => Ord1 (Scope b f) where
-  compare1 a b = fmap Lift2 (unscope a) `compare1` fmap Lift2 (unscope b)
+  compare1 a b = unscope a `compare1` unscope b
   {-# INLINE compare1 #-}
 
 instance (Functor f, Show b, Show1 f, Show a) => Show (Scope b f a) where
   showsPrec = showsPrec1
 instance (Functor f, Show b, Show1 f) => Show1 (Scope b f) where
   showsPrec1 d a = showParen (d > 10) $
-    showString "Scope " . showsPrec1 11 (fmap Lift2 (unscope a))
+    showString "Scope " . showsPrec1 11 (unscope a)
 
 instance (Functor f, Read b, Read1 f, Read a) => Read  (Scope b f a) where
   readsPrec = readsPrec1

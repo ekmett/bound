@@ -129,21 +129,21 @@ instance (Monad f, Eq b, Eq1 f, Eq a) => Eq  (Scope b f a) where
   (==) = (==#)
   {-# INLINE (==) #-}
 instance (Monad f, Eq b, Eq1 f)       => Eq1 (Scope b f)   where
-  a ==# b = liftM Lift2 (fromScope a) ==# liftM Lift2 (fromScope b)
+  a ==# b = fromScope a ==# fromScope b
   {-# INLINE (==#) #-}
 
 instance (Monad f, Ord b, Ord1 f, Ord a) => Ord  (Scope b f a) where
   compare = compare1
   {-# INLINE compare #-}
 instance (Monad f, Ord b, Ord1 f)        => Ord1 (Scope b f) where
-  compare1 a b = liftM Lift2 (fromScope a) `compare1` liftM Lift2 (fromScope b)
+  compare1 a b = fromScope a `compare1` fromScope b
   {-# INLINE compare1 #-}
 
 instance (Functor f, Show b, Show1 f, Show a) => Show (Scope b f a) where
   showsPrec = showsPrec1
 instance (Functor f, Show b, Show1 f) => Show1 (Scope b f) where
   showsPrec1 d a = showParen (d > 10) $
-    showString "Scope " . showsPrec1 11 (fmap (Lift2 . fmap Lift1) (unscope a))
+    showString "Scope " . showsPrec1 11 (fmap (fmap Lift1) (unscope a))
 
 instance (Functor f, Read b, Read1 f, Read a) => Read  (Scope b f a) where
   readsPrec = readsPrec1
@@ -151,7 +151,7 @@ instance (Functor f, Read b, Read1 f)         => Read1 (Scope b f) where
   readsPrec1 d = readParen (d > 10) $ \r -> do
     ("Scope", r') <- lex r
     (s, r'') <- readsPrec1 11 r'
-    return (Scope (fmap (fmap lower1 . lower2) s), r'')
+    return (Scope (fmap (fmap lower1) s), r'')
 
 instance Bound (Scope b) where
   Scope m >>>= f = Scope (liftM (fmap (>>= f)) m)
