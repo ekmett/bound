@@ -25,11 +25,18 @@ import Control.Monad.Trans.Class
 
 infixl 1 >>>=
 
--- | Instances of 'Bound' may or may not be monad transformers.
+-- | Instances of 'Bound' generate left modules over monads.
+-- 
+-- This means they should satisfy the following laws:
 --
--- If they are, then @m '>>>=' f ≡ m '>>=' 'lift' '.' f@ is required to hold, and is
--- in fact the default definition. If it is not a 'MonadTrans' instance, then
--- you have greater flexibility in how to implement this class.
+-- > m >>>= return ≡ m
+-- > m >>>= (λ x → k x >>= h) ≡ (m >>>= k) >>>= h
+--
+-- This guarantees that a typical Monad instance for an expression type
+-- where Bound instances appear will satisfy the Monad laws (see doc/BoundLaws.hs).
+--
+-- If instances of Bound are monad transformers, then @m '>>>=' f ≡ m '>>=' 'lift' '.' f@
+-- implies the above laws, and is in fact the default definition.
 --
 -- This is useful for types like expression lists, case alternatives,
 -- schemas, etc. that may not be expressions in their own right, but often
