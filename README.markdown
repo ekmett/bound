@@ -13,8 +13,15 @@ or lambda, as they ease the task of avoiding variable capture and testing for al
 See [the documentation](http://hackage.haskell.org/package/bound) on hackage for more information, but here is an example:
 
 ```haskell
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveFoldable #-}
+{-# LANGUAGE DeriveTraversable #-}
 import Bound
 import Prelude.Extras
+import Control.Applicative
+import Control.Monad
+import Data.Foldable
+import Data.Traversable
 
 infixl 9 :@
 data Exp a = V a | Exp a :@ Exp a | Lam (Scope () Exp a)
