@@ -1,3 +1,7 @@
+0.9
+---
+* Added the missing instance for `Applicative (Scope b f)`
+
 0.8.1
 -----
 * SafeHaskell support
