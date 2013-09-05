@@ -4,7 +4,7 @@
 #endif
 -----------------------------------------------------------------------------
 -- |
--- Copyright   :  (C) 2012 Edward Kmett
+-- Copyright   :  (C) 2012-2013 Edward Kmett
 -- License     :  BSD-style (see the file LICENSE)
 --
 -- Maintainer  :  Edward Kmett <ekmett@gmail.com>
@@ -110,6 +110,12 @@ instance Foldable f => Foldable (Scope b f) where
 instance Traversable f => Traversable (Scope b f) where
   traverse f (Scope a) = Scope <$> traverse (traverse (traverse f)) a
   {-# INLINE traverse #-}
+
+instance (Functor f, Monad f) => Applicative (Scope b f) where
+  pure = return
+  {-# INLINE pure #-}
+  (<*>) = ap
+  {-# INLINE (<*>) #-}
 
 -- | The monad permits substitution on free variables, while preserving
 -- bound variables
