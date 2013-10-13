@@ -1,3 +1,7 @@
+0.9.1.1
+-------
+* Updated to work with `bifunctors` 4.0
+
 0.9.1
 -----
 * Updated to work with `comonad` 4.0 and `profunctors` 4.0
