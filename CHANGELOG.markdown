@@ -1,3 +1,7 @@
+0.9.1
+-----
+* Updated to work with `comonad` 4.0 and `profunctors` 4.0
+
 0.9
 ---
 * Added the missing instance for `Applicative (Scope b f)`
