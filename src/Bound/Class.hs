@@ -26,7 +26,7 @@ import Control.Monad.Trans.Class
 infixl 1 >>>=
 
 -- | Instances of 'Bound' generate left modules over monads.
--- 
+--
 -- This means they should satisfy the following laws:
 --
 -- > m >>>= return ≡ m

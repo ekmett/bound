@@ -67,7 +67,7 @@
 -- and the related combinators from "Bound.Name". They are not re-exported
 -- from this module by default.
 --
--- The approach used in this package was first elaborated upon by Richard Bird 
+-- The approach used in this package was first elaborated upon by Richard Bird
 -- and Ross Patterson
 -- in \"de Bruijn notation as a nested data type\", available from
 -- <http://www.cs.uwyo.edu/~jlc/courses/5000_fall_08/debruijn_as_nested_datatype.pdf>
