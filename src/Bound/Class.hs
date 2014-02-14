@@ -22,6 +22,16 @@ module Bound.Class
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 704
 import Control.Monad.Trans.Class
 #endif
+import Data.Monoid
+import Control.Monad.Trans.Cont
+import Control.Monad.Trans.Error
+import Control.Monad.Trans.Identity
+import Control.Monad.Trans.List
+import Control.Monad.Trans.Maybe
+import Control.Monad.Trans.RWS
+import Control.Monad.Trans.Reader
+import Control.Monad.Trans.State
+import Control.Monad.Trans.Writer
 
 infixl 1 >>>=
 
@@ -55,6 +65,42 @@ class Bound t where
   m >>>= f = m >>= lift . f
   {-# INLINE (>>>=) #-}
 #endif
+
+instance Bound (ContT c) where
+  m >>>= f = m >>= lift . f
+  {-# INLINE (>>>=) #-}
+
+instance Error e => Bound (ErrorT e) where
+ m >>>= f = m >>= lift . f
+ {-# INLINE (>>>=) #-}
+
+instance Bound IdentityT where
+ m >>>= f = m >>= lift . f
+ {-# INLINE (>>>=) #-}
+
+instance Bound ListT where
+ m >>>= f = m >>= lift . f
+ {-# INLINE (>>>=) #-}
+
+instance Bound MaybeT where
+ m >>>= f = m >>= lift . f
+ {-# INLINE (>>>=) #-}
+
+instance Monoid w => Bound (RWST r w s) where
+ m >>>= f = m >>= lift . f
+ {-# INLINE (>>>=) #-}
+
+instance Bound (ReaderT r) where
+ m >>>= f = m >>= lift . f
+ {-# INLINE (>>>=) #-}
+
+instance Bound (StateT s) where
+ m >>>= f = m >>= lift . f
+ {-# INLINE (>>>=) #-}
+
+instance Monoid w => Bound (WriterT w) where
+ m >>>= f = m >>= lift . f
+ {-# INLINE (>>>=) #-}
 
 infixr 1 =<<<
 -- | A flipped version of ('>>>=').
