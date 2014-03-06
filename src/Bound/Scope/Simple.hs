@@ -105,6 +105,12 @@ instance Traversable f => Traversable (Scope b f) where
   traverse f (Scope a) = Scope <$> traverse (traverse f) a
   {-# INLINE traverse #-}
 
+instance (Functor f, Monad f) => Applicative (Scope b f) where
+  pure = return
+  {-# INLINE pure #-}
+  (<*>) = ap
+  {-# INLINE (<*>) #-}
+
 -- | The monad permits substitution on free variables, while preserving
 -- bound variables
 instance Monad f => Monad (Scope b f) where
