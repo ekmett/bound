@@ -58,6 +58,7 @@ module Bound.Scope
   , mapMScope
   , serializeScope
   , deserializeScope
+  , hoistScope
   , bitraverseScope
   , transverseScope
   , instantiateVars
@@ -411,6 +412,11 @@ instantiateVars :: Monad t => [a] -> Scope Int t a -> t a
 instantiateVars as = instantiate (vs !!) where
   vs = map return as
 {-# INLINE instantiateVars #-}
+
+-- | Lift a natural transformation from @f@ to @g@ into one between scopes.
+hoistScope :: Functor f => (forall x. f x -> g x) -> Scope b f a -> Scope b g a
+hoistScope t (Scope b) = Scope $ t (fmap t <$> b)
+{-# INLINE hoistScope #-}
 
 instance (Serial b, Serial1 f) => Serial1 (Scope b f) where
   serializeWith = serializeScope serialize

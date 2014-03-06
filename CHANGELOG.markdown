@@ -3,7 +3,7 @@
 * Added instances for `Bound` for all of the `mtl` monads.
 * Added `Data` and `Typeable` support to both versions of `Scope`
 * Added the missing `Applictive` instance to `Bound.Scope.Simple`
-* Moved `bitraverseScope`, `transverseScope`, and `instantiateVars` here from the `ermine` compiler.
+* Moved `hoistScope`, `bitraverseScope`, `transverseScope`, and `instantiateVars` here from the `ermine` compiler.
 
 0.9.1.1
 -------
