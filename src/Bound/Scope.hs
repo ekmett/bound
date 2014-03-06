@@ -2,6 +2,11 @@
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
 #endif
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 -----------------------------------------------------------------------------
 -- |
 -- Copyright   :  (C) 2012-2013 Edward Kmett
@@ -68,6 +73,7 @@ import Data.Serialize (Serialize)
 import Data.Traversable
 import Prelude.Extras
 import Prelude hiding (foldr, mapM, mapM_)
+import Data.Data
 
 -------------------------------------------------------------------------------
 -- Scopes
@@ -93,6 +99,10 @@ import Prelude hiding (foldr, mapM, mapM_)
 -- @f (Var b a)@, but the extra @f a@ inside permits us a cheaper 'lift'.
 --
 newtype Scope b f a = Scope { unscope :: f (Var b (f a)) }
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
+  deriving Typeable
+#endif
+
 
 -------------------------------------------------------------------------------
 -- Instances
@@ -388,3 +398,23 @@ instance (Binary b, Serial1 f, Binary a) => Binary (Scope b f a) where
 instance (Serialize b, Serial1 f, Serialize a) => Serialize (Scope b f a) where
   put = serializeScope Serialize.put Serialize.put
   get = deserializeScope Serialize.get Serialize.get
+
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 707
+instance (Typeable b, Typeable1 f) => Typeable1 (Scope b f) where
+  typeOf1 _ = mkTyConApp scopeTyCon [typeOf (undefined :: b), typeOf1 (undefined :: f ())]
+
+scopeTyCon :: TyCon
+#if MIN_VERSION_base(4,4,0)
+scopeTyCon = mkTyCon3 "bound" "Bound.Scope" "Scope"
+#else
+scopeTyCon = mkTyCon "Bound.Scope.Scope"
+#endif
+
+#else
+
+-- only needed for ghc7.8.1rc1 compatibility
+#define Typeable1 Typeable
+
+#endif
+
+deriving instance (Typeable b, Typeable1 f, Data a, Data (f (Var b (f a)))) => Data (Scope b f a)
