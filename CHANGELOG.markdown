@@ -1,3 +1,9 @@
+1.0
+---
+* Added instances for `Bound` for all of the `mtl` monads.
+* Added `Data` and `Typeable` support to both versions of `Scope`
+* Added the missing `Applictive` instance to `Bound.Scope.Simple`
+
 0.9.1.1
 -------
 * Updated to work with `bifunctors` 4.0
