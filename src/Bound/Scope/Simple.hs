@@ -1,6 +1,18 @@
 {-# LANGUAGE CPP #-}
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
+#if defined(__GLASGOW_HASKELL__)
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE UndecidableInstances #-}
+
+#if __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
+#endif
+
+#endif
+
+#ifndef MIN_VERSION_base
+#define MIN_VERSION_base(x,y,z) 1
 #endif
 -----------------------------------------------------------------------------
 -- |
@@ -58,6 +70,7 @@ import Data.Bitraversable
 import Data.Bytes.Get
 import Data.Bytes.Put
 import Data.Bytes.Serial
+import Data.Data
 import Data.Foldable
 import Data.Hashable
 import Data.Hashable.Extras
@@ -87,6 +100,9 @@ import Prelude hiding (foldr, mapM, mapM_)
 -- Another use case is for syntaxes not stable under substitution,
 -- therefore with only a 'Functor' instance and no 'Monad' instance.
 newtype Scope b f a = Scope { unscope :: f (Var b a) }
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ > 707
+  deriving Typeable
+#endif
 
 -------------------------------------------------------------------------------
 -- Instances
@@ -372,3 +388,27 @@ instance (Binary b, Serial1 f, Binary a) => Binary (Scope b f a) where
 instance (Serialize b, Serial1 f, Serialize a) => Serialize (Scope b f a) where
   put = serializeScope Serialize.put Serialize.put
   get = deserializeScope Serialize.get Serialize.get
+
+#ifdef __GLASGOW_HASKELL__
+
+#if __GLASGOW_HASKELL__ < 707
+instance (Typeable b, Typeable1 f) => Typeable1 (Scope b f) where
+  typeOf1 _ = mkTyConApp scopeTyCon [typeOf (undefined :: b), typeOf1 (undefined :: f ())]
+
+scopeTyCon :: TyCon
+#if MIN_VERSION_base(4,4,0)
+scopeTyCon = mkTyCon3 "bound" "Bound.Scope" "Scope"
+#else
+scopeTyCon = mkTyCon "Bound.Scope.Scope"
+#endif
+
+#else
+
+-- only needed for ghc7.8.1rc1 compatibility
+#define Typeable1 Typeable
+
+#endif
+
+deriving instance (Typeable b, Typeable1 f, Data a, Data (f (Var b a))) => Data (Scope b f a)
+
+#endif

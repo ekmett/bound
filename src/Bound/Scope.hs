@@ -1,11 +1,19 @@
 {-# LANGUAGE CPP #-}
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
+#ifdef __GLASGOW_HASKELL__
+
+#if __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
 #endif
+
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
+#endif
+
+#ifndef MIN_VERSION_base
+#define MIN_VERSION_base(x,y,z) 1
+#endif
 
 -----------------------------------------------------------------------------
 -- |
@@ -399,7 +407,9 @@ instance (Serialize b, Serial1 f, Serialize a) => Serialize (Scope b f a) where
   put = serializeScope Serialize.put Serialize.put
   get = deserializeScope Serialize.get Serialize.get
 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 707
+#ifdef __GLASGOW_HASKELL__
+
+#if __GLASGOW_HASKELL__ < 707
 instance (Typeable b, Typeable1 f) => Typeable1 (Scope b f) where
   typeOf1 _ = mkTyConApp scopeTyCon [typeOf (undefined :: b), typeOf1 (undefined :: f ())]
 
@@ -411,10 +421,9 @@ scopeTyCon = mkTyCon "Bound.Scope.Scope"
 #endif
 
 #else
-
--- only needed for ghc7.8.1rc1 compatibility
 #define Typeable1 Typeable
-
 #endif
 
 deriving instance (Typeable b, Typeable1 f, Data a, Data (f (Var b (f a)))) => Data (Scope b f a)
+
+#endif
