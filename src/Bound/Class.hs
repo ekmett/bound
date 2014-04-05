@@ -39,13 +39,15 @@ infixl 1 >>>=
 --
 -- This means they should satisfy the following laws:
 --
--- > m >>>= return ≡ m
--- > m >>>= (λ x → k x >>= h) ≡ (m >>>= k) >>>= h
+-- @
+-- m '>>>=' 'return' ≡ m
+-- m '>>>=' (λ x → k x '>>=' h) ≡ (m '>>>=' k) '>>>=' h
+-- @
 --
 -- This guarantees that a typical Monad instance for an expression type
 -- where Bound instances appear will satisfy the Monad laws (see doc/BoundLaws.hs).
 --
--- If instances of Bound are monad transformers, then @m '>>>=' f ≡ m '>>=' 'lift' '.' f@
+-- If instances of 'Bound' are monad transformers, then @m '>>>=' f ≡ m '>>=' 'lift' '.' f@
 -- implies the above laws, and is in fact the default definition.
 --
 -- This is useful for types like expression lists, case alternatives,
