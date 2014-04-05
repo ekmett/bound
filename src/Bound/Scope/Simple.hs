@@ -233,7 +233,7 @@ instantiate1 :: Monad f => f a -> Scope n f a -> f a
 instantiate1 e = instantiate (const e)
 {-# INLINE instantiate1 #-}
 
-hoistScope :: Monad f => (f (Var b a) -> g (Var b a)) -> Scope b f a -> Scope b g a
+hoistScope :: (f (Var b a) -> g (Var b a)) -> Scope b f a -> Scope b g a
 hoistScope f = Scope . f . unscope
 {-# INLINE hoistScope #-}
 
