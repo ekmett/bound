@@ -1,3 +1,8 @@
+1.0.1
+-----
+* Added a monomorphic `hoistScope` for `Bound.Scope.Simple`
+
+
 1.0
 ---
 * Added instances for `Bound` for all of the `mtl` monads.
