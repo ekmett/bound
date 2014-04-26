@@ -8,11 +8,15 @@ before_install:
   - travis/cabal-apt-install $mode
 
 install:
+  - cabal install packunused packdeps
   - cabal configure $mode
-  - cabal build
+  - cabal build --ghc-options=-ddump-minimal-imports
 
 script:
-  - $script && hlint src --cpp-define HLINT
+  - $script
+  - packdeps bound.cabal
+  - packunused
+  - hlint src --cpp-define HLINT
 
 notifications:
   irc:
