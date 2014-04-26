@@ -78,7 +78,8 @@ library
     transformers    >= 0.2     && < 0.4
 
   ghc-options: -Wall -O2 -fspec-constr -fdicts-cheap -funbox-strict-fields
-  if impl(ghc>=7.4)
+
+  if impl(ghc >=7.4 && < 7.6)
     build-depends: ghc-prim
 
 test-suite Simple
