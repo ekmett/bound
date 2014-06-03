@@ -61,6 +61,7 @@ module Bound.Scope
   , deserializeScope
   , hoistScope
   , bitraverseScope
+  , bitransverseScope
   , transverseScope
   , instantiateVars
   ) where
@@ -399,7 +400,7 @@ deserializeScope gb gv = liftM Scope $ deserializeWith (deserializeWith2 gb $ de
 
 -- | This allows you to 'bitraverse' a 'Scope'.
 bitraverseScope :: (Bitraversable t, Applicative f) => (k -> f k') -> (a -> f a') -> Scope b (t k) a -> f (Scope b (t k') a')
-bitraverseScope f g = fmap Scope . bitraverse f (traverse (bitraverse f g)) . unscope
+bitraverseScope f = bitransverseScope (bitraverse f)
 {-# INLINE bitraverseScope #-}
 
 -- | This is a higher-order analogue of 'traverse'.
@@ -407,6 +408,10 @@ transverseScope :: (Applicative f, Monad f, Traversable g)
                 => (forall r. g r -> f (h r))
                 -> Scope b g a -> f (Scope b h a)
 transverseScope tau (Scope e) = Scope <$> (tau =<< traverse (traverse tau) e)
+
+bitransverseScope :: Applicative f => (forall a a'. (a -> f a') -> t a -> f (u a')) -> (a -> f a') -> Scope b t a -> f (Scope b u a')
+bitransverseScope tau f = fmap Scope . tau (_F (tau f)) . unscope
+{-# INLINE bitransverseScope #-}
 
 -- | instantiate bound variables using a list of new variables
 instantiateVars :: Monad t => [a] -> Scope Int t a -> t a

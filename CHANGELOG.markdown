@@ -1,12 +1,14 @@
+1.0.3
+-----
+* Added `bitransverseScope`.
+
 1.0.2
 -----
 * Removed unneccesary constraint on `hoistScope`.
 
-
 1.0.1
 -----
 * Added a monomorphic `hoistScope` for `Bound.Scope.Simple`
-
 
 1.0
 ---
