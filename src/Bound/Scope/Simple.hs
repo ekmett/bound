@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE Rank2Types #-}
 #if defined(__GLASGOW_HASKELL__)
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
@@ -57,6 +58,10 @@ module Bound.Scope.Simple
   , serializeScope
   , deserializeScope
   , hoistScope
+  , bitraverseScope
+  , bitransverseScope
+  , transverseScope
+  , instantiateVars
   ) where
 
 import Bound.Class
@@ -355,6 +360,28 @@ traverseScope :: (Applicative g, Traversable f) =>
                  (b -> g d) -> (a -> g c) -> Scope b f a -> g (Scope d f c)
 traverseScope f g (Scope s) = Scope <$> traverse (bitraverse f g) s
 {-# INLINE traverseScope #-}
+
+-- | This allows you to 'bitraverse' a 'Scope'.
+bitraverseScope :: (Bitraversable t, Applicative f) => (k -> f k') -> (a -> f a') -> Scope b (t k) a -> f (Scope b (t k') a')
+bitraverseScope f = bitransverseScope (bitraverse f)
+{-# INLINE bitraverseScope #-}
+
+-- | This is a higher-order analogue of 'traverse'.
+transverseScope :: (Functor f)
+                => (forall r. g r -> f (h r))
+                -> Scope b g a -> f (Scope b h a)
+transverseScope tau (Scope s) = Scope <$> tau s
+
+-- | instantiate bound variables using a list of new variables
+instantiateVars :: Monad t => [a] -> Scope Int t a -> t a
+instantiateVars as = instantiate (vs !!) where
+  vs = map return as
+{-# INLINE instantiateVars #-}
+
+bitransverseScope :: Applicative f => (forall a a'. (a -> f a') ->         t a -> f         (u a'))
+                                   ->  forall a a'. (a -> f a') -> Scope b t a -> f (Scope b u a')
+bitransverseScope tau f (Scope s) = Scope <$> tau (traverse f) s
+{-# INLINE bitransverseScope #-}
 
 -- | mapM over both bound and free variables
 mapMBound :: (Monad m, Traversable f) =>
