@@ -75,7 +75,7 @@ library
     hashable-extras >= 0.1     && < 1,
     prelude-extras  >= 0.3     && < 1,
     profunctors     >= 3.3     && < 5,
-    transformers    >= 0.2     && < 0.4
+    transformers    >= 0.2     && < 0.5
 
   ghc-options: -Wall -O2 -fspec-constr -fdicts-cheap -funbox-strict-fields
 
