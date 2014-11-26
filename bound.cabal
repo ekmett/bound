@@ -86,7 +86,7 @@ test-suite Simple
   type: exitcode-stdio-1.0
   main-is: Simple.hs
   hs-source-dirs: examples
-  ghc-options -Wall -threaded
+  ghc-options: -Wall -threaded
   if impl(ghc<7.6.1)
     ghc-options: -Werror
   build-depends:
