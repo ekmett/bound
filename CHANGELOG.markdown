@@ -1,3 +1,7 @@
+1.0.4
+-----
+* Widened version bound on `transformers`.
+
 1.0.3
 -----
 * Added `bitransverseScope`.
