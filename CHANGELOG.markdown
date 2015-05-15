@@ -1,3 +1,8 @@
+1.0.5
+-----
+* Widened version bound on `bifunctors`.
+* Widened version bound on `profunctors`.
+
 1.0.4
 -----
 * Widened version bound on `transformers`.
