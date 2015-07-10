@@ -2,9 +2,10 @@
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 704
 {-# LANGUAGE DefaultSignatures #-}
 #endif
+{-# OPTIONS -fno-warn-deprecations #-}
 -----------------------------------------------------------------------------
 -- |
--- Copyright   :  (C) 2012 Edward Kmett
+-- Copyright   :  (C) 2012-2015 Edward Kmett
 -- License     :  BSD-style (see the file LICENSE)
 --
 -- Maintainer  :  Edward Kmett <ekmett@gmail.com>
@@ -19,10 +20,12 @@ module Bound.Class
   , (=<<<)
   ) where
 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 704
+#if __GLASGOW_HASKELL__ >= 704
 import Control.Monad.Trans.Class
 #endif
+#if __GLASGOW_HASKELL__ < 710
 import Data.Monoid
+#endif
 import Control.Monad.Trans.Cont
 import Control.Monad.Trans.Error
 import Control.Monad.Trans.Identity

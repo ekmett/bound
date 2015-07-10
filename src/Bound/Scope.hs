@@ -409,7 +409,7 @@ transverseScope :: (Applicative f, Monad f, Traversable g)
                 -> Scope b g a -> f (Scope b h a)
 transverseScope tau (Scope e) = Scope <$> (tau =<< traverse (traverse tau) e)
 
-bitransverseScope :: Applicative f => (forall a a'. (a -> f a') -> t a -> f (u a')) -> (a -> f a') -> Scope b t a -> f (Scope b u a')
+bitransverseScope :: Applicative f => (forall a a'. (a -> f a') -> t a -> f (u a')) -> (c -> f c') -> Scope b t c -> f (Scope b u c')
 bitransverseScope tau f = fmap Scope . tau (_F (tau f)) . unscope
 {-# INLINE bitransverseScope #-}
 

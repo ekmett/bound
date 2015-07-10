@@ -43,12 +43,16 @@ module Bound.Name
 
 import Bound.Scope
 import Bound.Var
+#if __GLASGOW_HASKELL__ < 710
 import Control.Applicative
+#endif
 import Control.Comonad
 import Control.Monad (liftM, liftM2)
+#if __GLASGOW_HASKELL__ < 710
 import Data.Foldable
-import Data.Traversable
 import Data.Monoid
+import Data.Traversable
+#endif
 import Data.Bifunctor
 import Data.Bifoldable
 import qualified Data.Binary as Binary

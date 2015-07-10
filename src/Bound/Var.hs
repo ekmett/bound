@@ -29,11 +29,15 @@ module Bound.Var
   , _F
   ) where
 
+#if __GLASGOW_HASKELL__ < 710
 import Control.Applicative
+#endif
 import Control.Monad (liftM, ap)
+#if __GLASGOW_HASKELL__ < 710
 import Data.Foldable
 import Data.Traversable
 import Data.Monoid (mempty)
+#endif
 import Data.Hashable
 import Data.Hashable.Extras
 import Data.Bifunctor
@@ -53,7 +57,9 @@ import GHC.Generics
 import Data.Profunctor
 import qualified Data.Serialize as Serialize
 import Data.Serialize (Serialize)
+#if __GLASGOW_HASKELL__ < 710
 import Data.Word
+#endif
 import Prelude.Extras
 
 ----------------------------------------------------------------------------
