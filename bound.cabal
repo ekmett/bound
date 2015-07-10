@@ -87,8 +87,6 @@ test-suite Simple
   main-is: Simple.hs
   hs-source-dirs: examples
   ghc-options: -Wall -threaded
-  if impl(ghc<7.6.1)
-    ghc-options: -Werror
   build-depends:
     base,
     bound,
@@ -100,8 +98,6 @@ test-suite doctests
   main-is: doctests.hs
   hs-source-dirs: tests
   ghc-options: -Wall -threaded
-  if impl(ghc<7.6.1)
-    ghc-options: -Werror
   build-depends:
     base,
     directory >= 1.0 && < 1.3,
