@@ -1,3 +1,7 @@
+1.0.6
+-----
+* Compiles warning-free on GHC 7.10
+
 1.0.5
 -----
 * Widened version bound on `bifunctors`.
