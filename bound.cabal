@@ -48,6 +48,14 @@ extra-source-files:
   CHANGELOG.markdown
   AUTHORS.markdown
 
+flag template-haskell
+  description:
+    You can disable the use of the `template-haskell` package using `-f-template-haskell`.
+    .
+    Disabling this is an unsupported configuration, but it may be useful for accelerating builds in sandboxes for expert users.
+  default: True
+  manual: True
+
 source-repository head
   type: git
   location: git://github.com/ekmett/bound.git
@@ -62,25 +70,30 @@ library
     Bound.Scope
     Bound.Scope.Simple
     Bound.Term
+    Bound.TH
     Bound.Var
 
   build-depends:
-    base            >= 4       && < 5,
-    bifunctors      >= 3       && < 6,
-    binary          >= 0.5     && < 0.8,
-    bytes           >= 0.4     && < 1,
-    cereal          >= 0.3.5.2 && < 0.5,
-    comonad         >= 3       && < 5,
-    hashable        >= 1.1     && < 1.3,
-    hashable-extras >= 0.1     && < 1,
-    prelude-extras  >= 0.3     && < 1,
-    profunctors     >= 3.3     && < 6,
-    transformers    >= 0.2     && < 0.5
+    base             >= 4       && < 5,
+    bifunctors       >= 3       && < 6,
+    binary           >= 0.5     && < 0.8,
+    bytes            >= 0.4     && < 1,
+    cereal           >= 0.3.5.2 && < 0.5,
+    comonad          >= 3       && < 5,
+    hashable         >= 1.1     && < 1.3,
+    hashable-extras  >= 0.1     && < 1,
+    prelude-extras   >= 0.3     && < 1,
+    profunctors      >= 3.3     && < 6,
+    template-haskell >= 2.7     && < 3,
+    transformers     >= 0.2     && < 0.5
 
   ghc-options: -Wall -O2 -fspec-constr -fdicts-cheap -funbox-strict-fields
 
   if impl(ghc >=7.4 && < 7.6)
     build-depends: ghc-prim
+
+  if flag(template-haskell) && impl(ghc)
+    build-depends: template-haskell >= 2.7 && < 3.0
 
 test-suite Simple
   type: exitcode-stdio-1.0
