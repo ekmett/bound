@@ -1,7 +1,7 @@
 Bound
 =====
 
-[![Build Status](https://secure.travis-ci.org/ekmett/bound.png?branch=master)](http://travis-ci.org/ekmett/bound)
+[![Hackage](https://img.shields.io/hackage/v/bound.svg)](https://hackage.haskell.org/package/bound) [![Build Status](https://secure.travis-ci.org/ekmett/bound.png?branch=master)](http://travis-ci.org/ekmett/bound)
 
 Goals
 -----
