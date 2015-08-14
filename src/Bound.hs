@@ -89,7 +89,7 @@
 -- (1) /Simple.hs/ provides an untyped lambda calculus with recursive let
 --   bindings and includes an evaluator for the untyped lambda calculus and a
 --   longer example taken from Lennart Augustsson's "λ-calculus cooked four
---   ways" available from <http://www.augustsson.net/Darcs/Lambda/top.pdf>
+--   ways" available from <http://foswiki.cs.uu.nl/foswiki/pub/USCS/InterestingPapers/AugustsonLambdaCalculus.pdf>
 --
 -- 2. /Derived.hs/ shows how much of the API can be automated with
 --    DeriveTraversable and adds combinators for building binders that support
