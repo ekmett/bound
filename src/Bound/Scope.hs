@@ -318,8 +318,7 @@ liftMScope :: Monad m => (b -> d) -> (a -> c) -> Scope b m a -> Scope d m c
 liftMScope f g (Scope s) = Scope $ liftM (bimap f (liftM g)) s
 {-# INLINE liftMScope #-}
 
--- | Obtain a result by collecting information from both bound and free
--- variables
+-- | Obtain a result by collecting information from bound variables
 foldMapBound :: (Foldable f, Monoid r) => (b -> r) -> Scope b f a -> r
 foldMapBound f (Scope s) = foldMap f' s where
   f' (B a) = f a
