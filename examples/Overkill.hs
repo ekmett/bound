@@ -1,14 +1,11 @@
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE PolyKinds #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE TypeOperators #-}
+
+{-# OPTIONS_GHC -fwarn-incomplete-patterns #-}
+
 module Overkill where
 
 import Data.Vector as Vector hiding ((++), map)
@@ -17,12 +14,10 @@ import Data.Foldable
 import Data.Traversable
 import Data.Monoid (Monoid(..))
 import Control.Monad
-import Control.Monad.Trans.Class
 import Control.Applicative
 import Prelude hiding (foldr)
 import Prelude.Extras
-import GHC.Prim (Constraint(..))
-import Unsafe.Coerce
+import Data.Type.Equality
 import Bound
 
 infixl 9 :@
@@ -41,10 +36,10 @@ data Exp a
 data Index = VarI | WildI | AsI Index | ConI [Index]
 
 data Pat :: Index -> (* -> *) -> * -> * where
-  VarP  ::                             Pat VarI f a
-  WildP ::                             Pat WildI f a
-  AsP   :: Pat i f a                -> Pat (AsI i) f a
-  ConP  :: String    -> Pats bs f a -> Pat (ConI bs) f a
+  VarP  ::                             Pat 'VarI f a
+  WildP ::                             Pat 'WildI f a
+  AsP   :: Pat i f a                -> Pat ('AsI i) f a
+  ConP  :: String    -> Pats bs f a -> Pat ('ConI bs) f a
   ViewP :: f a       -> Pat b f a   -> Pat b f a -- TODO: allow references to earlier variables
 
 data Pats :: [Index] -> (* -> *) -> * -> * where
@@ -52,10 +47,10 @@ data Pats :: [Index] -> (* -> *) -> * -> * where
   (:>) :: Pat b f a -> Pats bs f a -> Pats (b ': bs) f a
 
 data Path :: Index -> * where
-  V :: Path VarI
-  L :: Path (AsI a)
-  R :: Path a -> Path (AsI a)
-  C :: MPath as -> Path (ConI as)
+  V :: Path 'VarI
+  L :: Path ('AsI a)
+  R :: Path a -> Path ('AsI a)
+  C :: MPath as -> Path ('ConI as)
 
 data MPath :: [Index] -> * where
   H :: Path a   -> MPath (a ':as)
@@ -88,7 +83,11 @@ instance Eq a => Eq (Exp a) where (==) = (==#)
 instance Eq1 Exp where
   Var a     ==# Var b     = a == b
   (a :@ b)  ==# (c :@ d)  = a ==# c && b ==# d
-  Lam ps a  ==# Lam qs b  = eqPat ps qs && a ==# unsafeCoerce b -- eqPat proves equal shape
+  Lam ps a  ==# Lam qs b  =
+    case eqPat' ps qs of
+      Nothing -> False
+      Just Refl -> a ==# b
+
   Let as a  ==# Let bs b  = as == bs && a ==# b
   _         ==# _         = False
 
@@ -126,8 +125,8 @@ conp g ps = case go ps of
     go :: [P a] -> Ps a
     go [] = Ps NilP [] (const Nothing)
     go (P p as f : xs) = case go xs of
-      Ps ps ass g -> Ps (p :> ps) (as ++ ass) $ \v ->
-        T <$> g v <|> H <$> f v
+      Ps ps' ass g' -> Ps (p :> ps') (as ++ ass) $ \v ->
+        T <$> g' v <|> H <$> f v
 
 -- * smart lam
 lam :: P a -> Exp a -> Exp a
@@ -149,6 +148,17 @@ eqPat WildP       WildP       = True
 eqPat (AsP p)     (AsP q)     = eqPat p q
 eqPat (ConP g ps) (ConP h qs) = g == h  && eqPats ps qs
 eqPat (ViewP e p) (ViewP f q) = e ==# f && eqPat p q
+eqPat _ _ = False
+
+-- The same as eqPat, but if the patterns are equal, it returns a
+-- proof that their type arguments are the same.
+eqPat' :: (Eq1 f, Eq a) => Pat b f a -> Pat b' f a -> Maybe (b :~: b')
+eqPat' VarP VarP = Just Refl
+eqPat' WildP WildP = Just Refl
+eqPat' (AsP p) (AsP q) = (\Refl -> Refl) <$> eqPat' p q
+eqPat' (ConP g ps) (ConP h qs) = guard (g == h) >> ((\Refl -> Refl) <$> eqPats' ps qs)
+eqPat' (ViewP e p) (ViewP f q) = guard (e ==# f) >> eqPat' p q
+eqPat' _ _ = Nothing
 
 instance Eq1 f   => Eq1 (Pat b f)        where (==#) = eqPat
 instance (Eq1 f, Eq a) => Eq (Pat b f a) where (==) = eqPat
@@ -170,7 +180,7 @@ instance Functor f => Functor (Pat b f) where
 
 instance Foldable f => Foldable (Pat b f) where
   foldMap f (AsP p)     = foldMap f p
-  foldMap f (ConP g ps) = foldMap f ps
+  foldMap f (ConP _g ps) = foldMap f ps
   foldMap f (ViewP e p) = foldMap f e `mappend` foldMap f p
   foldMap _ _           = mempty
 
@@ -194,6 +204,16 @@ eqPats NilP      NilP      = True
 eqPats (p :> ps) (q :> qs) = eqPat p q && eqPats ps qs
 eqPats _         _         = False
 
+-- Like eqPats, but if the patses are equal, it returns a proof that their
+-- type arguments are the same.
+eqPats' :: (Eq1 f, Eq a) => Pats bs f a -> Pats bs' f a -> Maybe (bs :~: bs')
+eqPats' NilP NilP = Just Refl
+eqPats' (p :> ps) (q :> qs) = do
+  Refl <- eqPat' p q
+  Refl <- eqPats' ps qs
+  Just Refl
+eqPats' _ _ = Nothing
+
 instance Eq1 f         => Eq1 (Pats bs f)   where (==#) = eqPats
 instance (Eq1 f, Eq a) => Eq  (Pats bs f a) where (==)  = eqPats
 
@@ -212,7 +232,7 @@ instance Foldable f => Foldable (Pats bs f) where
   foldMap _ _    = mempty
 
 instance Traversable f => Traversable (Pats bs f) where
-  traverse f NilP = pure NilP
+  traverse _f NilP = pure NilP
   traverse f (p :> ps) = (:>) <$> traverse f p <*> traverse f ps
 
 instance Bound (Pats bs) where
@@ -220,18 +240,31 @@ instance Bound (Pats bs) where
   (p :> ps) >>>= f = (p >>>= f) :> (ps >>>= f)
 
 -- ** Path into Pats
+-- Internally, this is only used to implement eqPath, which is only
+-- used to implement this.
 eqMPath :: MPath is -> MPath js -> Bool
 eqMPath (H m) (H n) = eqPath m n
 eqMPath (T p) (T q) = eqMPath p q
 eqMPath _     _     = False
-instance Eq (MPath is) where (==) = eqMPath
 
+instance Eq (MPath is) where
+    H m == H n = m == n
+    T p == T q = p == q
+    _   == _   = False
+
+-- Internally, this is only used to define comparePath, which
+-- is only used here to define this.
 compareMPath :: MPath is -> MPath js -> Ordering
 compareMPath (H m) (H n) = comparePath m n
 compareMPath (H _) (T _) = LT
 compareMPath (T p) (T q) = compareMPath p q
 compareMPath (T _) (H _) = GT
-instance Ord (MPath is) where compare = compareMPath
+
+instance Ord (MPath is) where
+    compare (H m) (H n) = compare m n
+    compare (H _) (T _) = LT
+    compare (T p) (T q) = compare p q
+    compare (T _) (H _) = GT
 
 instance Show (MPath is) where
   showsPrec d (H m) = showParen (d > 10) $ showString "H " . showsPrec 11 m
@@ -240,6 +273,8 @@ instance Show (MPath is) where
 -- instance Read (MPath is)
 
 -- ** Path into Pat
+-- Internally, this is only used to implement eqMPath, which is only used
+-- to implement this.
 eqPath :: Path i -> Path j -> Bool
 eqPath V     V     = True
 eqPath L     L     = True
@@ -247,8 +282,13 @@ eqPath (R m) (R n) = eqPath m n
 eqPath (C p) (C q) = eqMPath p q
 eqPath _     _     = False
 
-instance Eq (Path i) where (==) = eqPath
+instance Eq (Path i) where
+    p == q = case compare p q of
+               EQ -> True
+               _ -> False
 
+-- Internally, this is only used to define compareMPath, which
+-- is only used here to define this.
 comparePath :: Path i -> Path j -> Ordering
 comparePath V     V     = EQ
 comparePath V     _     = LT
@@ -263,12 +303,21 @@ comparePath (C p) (C q) = compareMPath p q
 comparePath (C _) _     = GT
 
 instance Ord (Path i) where
-  compare V     V     = EQ
-  compare L     L     = EQ
-  compare L     _     = LT
-  compare (R _) L     = GT
-  compare (R m) (R n) = compare m n
-  compare (C p) (C q) = compare p q
+    compare V y = case (y :: Path 'VarI) of V -> EQ
+    compare L y = cpL y
+        where
+          cpL :: Path ('AsI a) -> Ordering
+          cpL L = EQ
+          cpL (R _) = LT
+    compare (R r) y = cpR r y
+        where
+          cpR :: Path a -> Path ('AsI a) -> Ordering
+          cpR _ L = GT
+          cpR m (R n) = compare m n
+    compare (C c) y = cpC c y
+        where
+          cpC :: MPath as -> Path ('ConI as) -> Ordering
+          cpC p (C q) = compare p q
 
 instance Show (Path i) where
   showsPrec _ V     = showString "V"
