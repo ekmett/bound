@@ -155,8 +155,13 @@ eqPat _ _ = False
 eqPat' :: (Eq1 f, Eq a) => Pat b f a -> Pat b' f a -> Maybe (b :~: b')
 eqPat' VarP VarP = Just Refl
 eqPat' WildP WildP = Just Refl
-eqPat' (AsP p) (AsP q) = (\Refl -> Refl) <$> eqPat' p q
-eqPat' (ConP g ps) (ConP h qs) = guard (g == h) >> ((\Refl -> Refl) <$> eqPats' ps qs)
+eqPat' (AsP p) (AsP q) = do
+  Refl <- eqPat' p q
+  Just Refl
+eqPat' (ConP g ps) (ConP h qs) = do
+  guard (g == h)
+  Refl <- eqPats' ps qs
+  Just Refl
 eqPat' (ViewP e p) (ViewP f q) = guard (e ==# f) >> eqPat' p q
 eqPat' _ _ = Nothing
 
