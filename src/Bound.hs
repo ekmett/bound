@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP             #-}
+
 -----------------------------------------------------------------------------
 -- |
 -- Copyright   :  (C) 2012 Edward Kmett
@@ -119,9 +121,14 @@ module Bound
   , Var(..)
   , fromScope
   , toScope
+  -- * Deriving instances 
+  , makeBound
   ) where
 
 import Bound.Var
 import Bound.Class
 import Bound.Scope
 import Bound.Term
+#ifdef MIN_VERSION_template_haskell
+import Bound.TH
+#endif
