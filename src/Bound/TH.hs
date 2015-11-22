@@ -207,8 +207,10 @@ makeBound name = do
         {-# INLINE (<*>) #-}
 
       instance Monad $(conT name) where
+# if __GLASGOW_HASKELL__ < 710
         return = $var
         {-# INLINE return #-}
+# endif
 
         (>>=)  = $bind
         {-# INLINE (>>=) #-}

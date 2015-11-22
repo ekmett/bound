@@ -137,7 +137,7 @@ instance Traversable f => Traversable (Scope b f) where
   {-# INLINE traverse #-}
 
 instance (Functor f, Monad f) => Applicative (Scope b f) where
-  pure = return
+  pure a = Scope (return (F (return a)))
   {-# INLINE pure #-}
   (<*>) = ap
   {-# INLINE (<*>) #-}
@@ -145,8 +145,10 @@ instance (Functor f, Monad f) => Applicative (Scope b f) where
 -- | The monad permits substitution on free variables, while preserving
 -- bound variables
 instance Monad f => Monad (Scope b f) where
+#if __GLASGOW_HASKELL__ < 710
   return a = Scope (return (F (return a)))
   {-# INLINE return #-}
+#endif
   Scope e >>= f = Scope $ e >>= \v -> case v of
     B b -> return (B b)
     F ea -> ea >>= unscope . f

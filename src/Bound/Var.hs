@@ -181,7 +181,7 @@ instance Applicative (Var b) where
   {-# INLINE (<*>) #-}
 
 instance Monad (Var b) where
-  return = F
+  return = pure
   {-# INLINE return #-}
   F a >>= f = f a
   B b >>= _ = B b
