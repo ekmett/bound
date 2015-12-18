@@ -1,0 +1,61 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Bound.TH</title><link href="ocean.css" rel="stylesheet" type="text/css" title="Ocean" /><script src="haddock-util.js" type="text/javascript"></script><script type="text/javascript">//<![CDATA[
+window.onload = function () {pageLoad();setSynopsis("mini_Bound-TH.html");};
+//]]>
+</script></head><body><div id="package-header"><ul class="links" id="page-menu"><li><a href="src/Bound-TH.html">Source</a></li><li><a href="index.html">Contents</a></li><li><a href="doc-index.html">Index</a></li></ul><p class="caption">bound-1.0.7: Making de Bruijn Succ Less</p></div><div id="content"><div id="module-header"><table class="info"><tr><th>Copyright</th><td>(C) 2012-2013 Edward Kmett</td></tr><tr><th>License</th><td>BSD-style (see the file LICENSE)</td></tr><tr><th>Maintainer</th><td>Edward Kmett &lt;ekmett@gmail.com&gt;</td></tr><tr><th>Stability</th><td>experimental</td></tr><tr><th>Portability</th><td>portable</td></tr><tr><th>Safe Haskell</th><td>None</td></tr><tr><th>Language</th><td>Haskell98</td></tr></table><p class="caption">Bound.TH</p></div><div id="description"><p class="caption">Description</p><div class="doc"><p>This is a Template Haskell module for deriving <code><a href="file:///usr/local/Cellar/ghc/7.10.2/share/doc/ghc/html/libraries/base-4.8.1.0/Control-Applicative.html#t:Applicative">Applicative</a></code> and
+ <code><a href="file:///usr/local/Cellar/ghc/7.10.2/share/doc/ghc/html/libraries/base-4.8.1.0/Control-Monad.html#t:Monad">Monad</a></code> instances for data types.</p></div></div><div id="synopsis"><p id="control.syn" class="caption expander" onclick="toggleSection('syn')">Synopsis</p><ul id="section.syn" class="hide" onclick="toggleSection('syn')"><li class="src short"><a href="#v:makeBound">makeBound</a> :: <a href="file:///usr/local/Cellar/ghc/7.10.2/share/doc/ghc/html/libraries/template-haskell-2.10.0.0/Language-Haskell-TH-Syntax.html#t:Name">Name</a> -&gt; <a href="file:///usr/local/Cellar/ghc/7.10.2/share/doc/ghc/html/libraries/template-haskell-2.10.0.0/Language-Haskell-TH-Lib.html#t:DecsQ">DecsQ</a></li></ul></div><div id="interface"><h1>Documentation</h1><div class="top"><p class="src"><a name="v:makeBound" class="def">makeBound</a> :: <a href="file:///usr/local/Cellar/ghc/7.10.2/share/doc/ghc/html/libraries/template-haskell-2.10.0.0/Language-Haskell-TH-Syntax.html#t:Name">Name</a> -&gt; <a href="file:///usr/local/Cellar/ghc/7.10.2/share/doc/ghc/html/libraries/template-haskell-2.10.0.0/Language-Haskell-TH-Lib.html#t:DecsQ">DecsQ</a> <a href="src/Bound-TH.html#makeBound" class="link">Source</a></p><div class="doc"><p>Use to automatically derive <code><a href="file:///usr/local/Cellar/ghc/7.10.2/share/doc/ghc/html/libraries/base-4.8.1.0/Control-Applicative.html#t:Applicative">Applicative</a></code> and <code><a href="file:///usr/local/Cellar/ghc/7.10.2/share/doc/ghc/html/libraries/base-4.8.1.0/Control-Monad.html#t:Monad">Monad</a></code> instances for
+ your datatype.</p><p>In GHC 7.10 or later the <code>DeriveAnyClass</code> extension may be used to derive the <code>Show1</code> and <code>Read1</code> instances</p><pre>{-<a name=" LANGUAGE DeriveAnyClass  "></a>-}
+{-<a name=" LANGUAGE DeriveFunctor   "></a>-}
+{-<a name=" LANGUAGE TemplateHaskell "></a>-}
+
+import Bound          (Scope, makeBound)
+import Prelude.Extras (Read1, Show1)
+
+data Exp a 
+  = V a 
+  | App (Exp a) (Exp a) 
+  | Lam (Scope () Exp a) 
+  | I Int 
+  deriving (Functor, Read, Read1, Show, Show1)
+
+makeBound ''Exp
+</pre><p>and in GHCi</p><pre>ghci&gt; :set -XDeriveAnyClass
+ghci&gt; :set -XDeriveFunctor 
+ghci&gt; :set -XTemplateHaskell 
+ghci&gt; import Bound          (Scope, makeBound)
+ghci&gt; import Prelude.Extras (Read1, Show1)
+ghci&gt; data Exp a = V a | App (Exp a) (Exp a) | Lam (Scope () Exp a) | I Int deriving (Functor, Read, Read1, Show, Show1); makeBound ''Exp
+</pre><p>or</p><pre>ghci&gt; :{
+ghci| data Exp a = V a | App (Exp a) (Exp a) | Lam (Scope () Exp a) | I Int deriving (Functor, Read, Read1, Show, Show1)
+ghci| makeBound ''Exp
+ghci| :}
+
+If <code>DeriveAnyClass</code> is not used the instances must be declared explicitly:
+
+</pre><p>data Exp a 
+   = V a 
+   | App (Exp a) (Exp a) 
+   | Lam (Scope () Exp a) 
+   | I Int 
+   deriving (Functor, Read, Show)
+ instance Read1 Exp
+ instance Show1 Exp</p><p>makeBound ''Exp
+ @ </p><p>or in GHCi:</p><pre>ghci&gt; :{
+ghci| data Exp a = V a | App (Exp a) (Exp a) | Lam (Scope () Exp a) | I Int deriving (Functor, Read, Show)
+ghci| instance Read1 Exp
+ghci| instance Show1 Exp
+ghci| makeBound ''Exp
+ghci| :}
+</pre><p><code><a href="file:///usr/local/Cellar/ghc/7.10.2/share/doc/ghc/html/libraries/base-4.8.1.0/Data-Eq.html#t:Eq">Eq</a></code> and <code><a href="file:///usr/local/Cellar/ghc/7.10.2/share/doc/ghc/html/libraries/base-4.8.1.0/Data-Ord.html#t:Ord">Ord</a></code> instances need to be derived differently if the data
+ type's immediate components include <code>Scope</code> (or other instances of
+ <code><a href="Bound-Class.html#t:Bound">Bound</a></code>)</p><p>In a file with <code>{-<a name=" LANGUAGE StandaloneDeriving "></a>-}</code> at the top:</p><pre>instance Eq1 Exp
+deriving instance Eq a =&gt; Eq (Exp a)
+
+instance Ord1 Exp
+deriving instance Ord a =&gt; Ord (Exp a)
+</pre><p>or in GHCi:</p><pre>ghci&gt; :set -XStandaloneDeriving 
+ghci&gt; deriving instance Eq a =&gt; Eq (Exp a); instance Eq1 Exp
+ghci&gt; deriving instance Ord a =&gt; Ord (Exp a); instance Ord1 Exp
+</pre><p>because their <code><a href="file:///usr/local/Cellar/ghc/7.10.2/share/doc/ghc/html/libraries/base-4.8.1.0/Data-Eq.html#t:Eq">Eq</a></code> and <code><a href="file:///usr/local/Cellar/ghc/7.10.2/share/doc/ghc/html/libraries/base-4.8.1.0/Data-Ord.html#t:Ord">Ord</a></code> instances require <code>Exp</code> to be a <code><a href="file:///usr/local/Cellar/ghc/7.10.2/share/doc/ghc/html/libraries/base-4.8.1.0/Control-Monad.html#t:Monad">Monad</a></code>:</p><pre>  instance (Monad f, Eq b, Eq1 f, Eq a)    =&gt; Eq (Scope b f a)
+  instance (Monad f, Ord b, Ord1 f, Ord a) =&gt; Ord (Scope b f a)
+</pre><p>Does not work yet for components that are lists or instances of
+ <code><a href="file:///usr/local/Cellar/ghc/7.10.2/share/doc/ghc/html/libraries/base-4.8.1.0/Data-Functor.html#t:Functor">Functor</a></code> or with a great deal other things.</p></div></div></div></div><div id="footer"><p>Produced by <a href="http://www.haskell.org/haddock/">Haddock</a> version 2.16.1</p></div></body></html>

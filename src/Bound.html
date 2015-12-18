@@ -7,132 +7,139 @@
 <link type='text/css' rel='stylesheet' href='hscolour.css' />
 </head>
 <body>
-<pre><a name="line-1"></a><span class='hs-comment'>-----------------------------------------------------------------------------</span>
-<a name="line-2"></a><span class='hs-comment'>-- |</span>
-<a name="line-3"></a><span class='hs-comment'>-- Copyright   :  (C) 2012 Edward Kmett</span>
-<a name="line-4"></a><span class='hs-comment'>-- License     :  BSD-style (see the file LICENSE)</span>
-<a name="line-5"></a><span class='hs-comment'>--</span>
-<a name="line-6"></a><span class='hs-comment'>-- Maintainer  :  Edward Kmett &lt;ekmett@gmail.com&gt;</span>
-<a name="line-7"></a><span class='hs-comment'>-- Stability   :  experimental</span>
-<a name="line-8"></a><span class='hs-comment'>-- Portability :  portable</span>
-<a name="line-9"></a><span class='hs-comment'>--</span>
-<a name="line-10"></a><span class='hs-comment'>-- We represent the target language itself as an ideal monad supplied by the</span>
-<a name="line-11"></a><span class='hs-comment'>-- user, and provide a 'Scope' monad transformer for introducing bound</span>
-<a name="line-12"></a><span class='hs-comment'>-- variables in user supplied terms. Users supply a 'Monad' and 'Traversable'</span>
-<a name="line-13"></a><span class='hs-comment'>-- instance, and we traverse to find free variables, and use the 'Monad' to</span>
-<a name="line-14"></a><span class='hs-comment'>-- perform substitution that avoids bound variables.</span>
-<a name="line-15"></a><span class='hs-comment'>--</span>
-<a name="line-16"></a><span class='hs-comment'>-- An untyped lambda calculus:</span>
+<pre><a name="line-1"></a><span class='hs-comment'>{-# LANGUAGE CPP             #-}</span>
+<a name="line-2"></a>
+<a name="line-3"></a><span class='hs-comment'>-----------------------------------------------------------------------------</span>
+<a name="line-4"></a><span class='hs-comment'>-- |</span>
+<a name="line-5"></a><span class='hs-comment'>-- Copyright   :  (C) 2012 Edward Kmett</span>
+<a name="line-6"></a><span class='hs-comment'>-- License     :  BSD-style (see the file LICENSE)</span>
+<a name="line-7"></a><span class='hs-comment'>--</span>
+<a name="line-8"></a><span class='hs-comment'>-- Maintainer  :  Edward Kmett &lt;ekmett@gmail.com&gt;</span>
+<a name="line-9"></a><span class='hs-comment'>-- Stability   :  experimental</span>
+<a name="line-10"></a><span class='hs-comment'>-- Portability :  portable</span>
+<a name="line-11"></a><span class='hs-comment'>--</span>
+<a name="line-12"></a><span class='hs-comment'>-- We represent the target language itself as an ideal monad supplied by the</span>
+<a name="line-13"></a><span class='hs-comment'>-- user, and provide a 'Scope' monad transformer for introducing bound</span>
+<a name="line-14"></a><span class='hs-comment'>-- variables in user supplied terms. Users supply a 'Monad' and 'Traversable'</span>
+<a name="line-15"></a><span class='hs-comment'>-- instance, and we traverse to find free variables, and use the 'Monad' to</span>
+<a name="line-16"></a><span class='hs-comment'>-- perform substitution that avoids bound variables.</span>
 <a name="line-17"></a><span class='hs-comment'>--</span>
-<a name="line-18"></a><span class='hs-comment'>-- @</span>
-<a name="line-19"></a><span class='hs-comment'>-- {-\# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable \#-}</span>
-<a name="line-20"></a><span class='hs-comment'>-- import Bound</span>
-<a name="line-21"></a><span class='hs-comment'>-- import Control.Applicative</span>
-<a name="line-22"></a><span class='hs-comment'>-- import Control.Monad ('Control.Monad.ap')</span>
-<a name="line-23"></a><span class='hs-comment'>-- import Prelude.Extras</span>
-<a name="line-24"></a><span class='hs-comment'>-- import Data.Foldable</span>
-<a name="line-25"></a><span class='hs-comment'>-- import Data.Traversable</span>
-<a name="line-26"></a><span class='hs-comment'>-- @</span>
-<a name="line-27"></a><span class='hs-comment'>--</span>
+<a name="line-18"></a><span class='hs-comment'>-- An untyped lambda calculus:</span>
+<a name="line-19"></a><span class='hs-comment'>--</span>
+<a name="line-20"></a><span class='hs-comment'>-- @</span>
+<a name="line-21"></a><span class='hs-comment'>-- {-\# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable \#-}</span>
+<a name="line-22"></a><span class='hs-comment'>-- import Bound</span>
+<a name="line-23"></a><span class='hs-comment'>-- import Control.Applicative</span>
+<a name="line-24"></a><span class='hs-comment'>-- import Control.Monad ('Control.Monad.ap')</span>
+<a name="line-25"></a><span class='hs-comment'>-- import Prelude.Extras</span>
+<a name="line-26"></a><span class='hs-comment'>-- import Data.Foldable</span>
+<a name="line-27"></a><span class='hs-comment'>-- import Data.Traversable</span>
 <a name="line-28"></a><span class='hs-comment'>-- @</span>
-<a name="line-29"></a><span class='hs-comment'>-- infixl 9 :\@</span>
-<a name="line-30"></a><span class='hs-comment'>-- data Exp a = V a | Exp a :\@ Exp a | Lam ('Scope' () Exp a)</span>
-<a name="line-31"></a><span class='hs-comment'>--   deriving ('Eq','Ord','Show','Read','Functor','Data.Foldable.Foldable','Data.Foldable.Traversable')</span>
-<a name="line-32"></a><span class='hs-comment'>-- @</span>
-<a name="line-33"></a><span class='hs-comment'>--</span>
+<a name="line-29"></a><span class='hs-comment'>--</span>
+<a name="line-30"></a><span class='hs-comment'>-- @</span>
+<a name="line-31"></a><span class='hs-comment'>-- infixl 9 :\@</span>
+<a name="line-32"></a><span class='hs-comment'>-- data Exp a = V a | Exp a :\@ Exp a | Lam ('Scope' () Exp a)</span>
+<a name="line-33"></a><span class='hs-comment'>--   deriving ('Eq','Ord','Show','Read','Functor','Data.Foldable.Foldable','Data.Foldable.Traversable')</span>
 <a name="line-34"></a><span class='hs-comment'>-- @</span>
-<a name="line-35"></a><span class='hs-comment'>-- instance 'Prelude.Extras.Eq1' Exp</span>
-<a name="line-36"></a><span class='hs-comment'>-- instance 'Prelude.Extras.Ord1' Exp</span>
-<a name="line-37"></a><span class='hs-comment'>-- instance 'Prelude.Extras.Show1' Exp</span>
-<a name="line-38"></a><span class='hs-comment'>-- instance 'Prelude.Extras.Read1' Exp</span>
-<a name="line-39"></a><span class='hs-comment'>-- instance 'Control.Applicative.Applicative' Exp where 'Control.Applicative.pure' = V; ('&lt;*&gt;') = 'Control.Monad.ap'</span>
-<a name="line-40"></a><span class='hs-comment'>-- @</span>
-<a name="line-41"></a><span class='hs-comment'>--</span>
+<a name="line-35"></a><span class='hs-comment'>--</span>
+<a name="line-36"></a><span class='hs-comment'>-- @</span>
+<a name="line-37"></a><span class='hs-comment'>-- instance 'Prelude.Extras.Eq1' Exp</span>
+<a name="line-38"></a><span class='hs-comment'>-- instance 'Prelude.Extras.Ord1' Exp</span>
+<a name="line-39"></a><span class='hs-comment'>-- instance 'Prelude.Extras.Show1' Exp</span>
+<a name="line-40"></a><span class='hs-comment'>-- instance 'Prelude.Extras.Read1' Exp</span>
+<a name="line-41"></a><span class='hs-comment'>-- instance 'Control.Applicative.Applicative' Exp where 'Control.Applicative.pure' = V; ('&lt;*&gt;') = 'Control.Monad.ap'</span>
 <a name="line-42"></a><span class='hs-comment'>-- @</span>
-<a name="line-43"></a><span class='hs-comment'>-- instance 'Monad' Exp where</span>
-<a name="line-44"></a><span class='hs-comment'>--   'return' = V</span>
-<a name="line-45"></a><span class='hs-comment'>--   V a      '&gt;&gt;=' f = f a</span>
-<a name="line-46"></a><span class='hs-comment'>--   (x :\@ y) '&gt;&gt;=' f = (x '&gt;&gt;=' f) :\@ (y &gt;&gt;= f)</span>
-<a name="line-47"></a><span class='hs-comment'>--   Lam e    '&gt;&gt;=' f = Lam (e '&gt;&gt;&gt;=' f)</span>
-<a name="line-48"></a><span class='hs-comment'>-- @</span>
-<a name="line-49"></a><span class='hs-comment'>--</span>
+<a name="line-43"></a><span class='hs-comment'>--</span>
+<a name="line-44"></a><span class='hs-comment'>-- @</span>
+<a name="line-45"></a><span class='hs-comment'>-- instance 'Monad' Exp where</span>
+<a name="line-46"></a><span class='hs-comment'>--   'return' = V</span>
+<a name="line-47"></a><span class='hs-comment'>--   V a      '&gt;&gt;=' f = f a</span>
+<a name="line-48"></a><span class='hs-comment'>--   (x :\@ y) '&gt;&gt;=' f = (x '&gt;&gt;=' f) :\@ (y &gt;&gt;= f)</span>
+<a name="line-49"></a><span class='hs-comment'>--   Lam e    '&gt;&gt;=' f = Lam (e '&gt;&gt;&gt;=' f)</span>
 <a name="line-50"></a><span class='hs-comment'>-- @</span>
-<a name="line-51"></a><span class='hs-comment'>-- lam :: 'Eq' a =&gt; a -&gt; 'Exp' a -&gt; 'Exp' a</span>
-<a name="line-52"></a><span class='hs-comment'>-- lam v b = Lam ('abstract1' v b)</span>
-<a name="line-53"></a><span class='hs-comment'>-- @</span>
-<a name="line-54"></a><span class='hs-comment'>--</span>
+<a name="line-51"></a><span class='hs-comment'>--</span>
+<a name="line-52"></a><span class='hs-comment'>-- @</span>
+<a name="line-53"></a><span class='hs-comment'>-- lam :: 'Eq' a =&gt; a -&gt; 'Exp' a -&gt; 'Exp' a</span>
+<a name="line-54"></a><span class='hs-comment'>-- lam v b = Lam ('abstract1' v b)</span>
 <a name="line-55"></a><span class='hs-comment'>-- @</span>
-<a name="line-56"></a><span class='hs-comment'>-- whnf :: 'Exp' a -&gt; 'Exp' a</span>
-<a name="line-57"></a><span class='hs-comment'>-- whnf (f :\@ a) = case whnf f of</span>
-<a name="line-58"></a><span class='hs-comment'>--   Lam b -&gt; whnf ('instantiate1' a b)</span>
-<a name="line-59"></a><span class='hs-comment'>--   f'    -&gt; f' :\@ a</span>
-<a name="line-60"></a><span class='hs-comment'>-- whnf e = e</span>
-<a name="line-61"></a><span class='hs-comment'>-- @</span>
-<a name="line-62"></a><span class='hs-comment'>--</span>
-<a name="line-63"></a><span class='hs-comment'>-- More exotic combinators for manipulating a 'Scope' can be imported from</span>
-<a name="line-64"></a><span class='hs-comment'>-- "Bound.Scope".</span>
-<a name="line-65"></a><span class='hs-comment'>--</span>
-<a name="line-66"></a><span class='hs-comment'>-- You can also retain names in your bound variables by using 'Bound.Name.Name'</span>
-<a name="line-67"></a><span class='hs-comment'>-- and the related combinators from "Bound.Name". They are not re-exported</span>
-<a name="line-68"></a><span class='hs-comment'>-- from this module by default.</span>
-<a name="line-69"></a><span class='hs-comment'>--</span>
-<a name="line-70"></a><span class='hs-comment'>-- The approach used in this package was first elaborated upon by Richard Bird </span>
-<a name="line-71"></a><span class='hs-comment'>-- and Ross Patterson</span>
-<a name="line-72"></a><span class='hs-comment'>-- in \"de Bruijn notation as a nested data type\", available from</span>
-<a name="line-73"></a><span class='hs-comment'>-- &lt;<a href="http://www.cs.uwyo.edu/~jlc/courses/5000_fall_08/debruijn_as_nested_datatype.pdf">http://www.cs.uwyo.edu/~jlc/courses/5000_fall_08/debruijn_as_nested_datatype.pdf</a>&gt;</span>
-<a name="line-74"></a><span class='hs-comment'>--</span>
-<a name="line-75"></a><span class='hs-comment'>-- However, the combinators they used required higher rank types. Here we</span>
-<a name="line-76"></a><span class='hs-comment'>-- demonstrate that the higher rank @gfold@ combinator they used isn't necessary</span>
-<a name="line-77"></a><span class='hs-comment'>-- to build the monad and use a monad transformer to encapsulate the novel</span>
-<a name="line-78"></a><span class='hs-comment'>-- recursion pattern in their generalized de Bruijn representation. It is named</span>
-<a name="line-79"></a><span class='hs-comment'>-- 'Scope' to match up with the terminology and usage pattern from Conor McBride</span>
-<a name="line-80"></a><span class='hs-comment'>-- and James McKinna's \"I am not a number: I am a free variable\", available</span>
-<a name="line-81"></a><span class='hs-comment'>-- from &lt;<a href="http://www.cs.st-andrews.ac.uk/~james/RESEARCH/notanum.pdf">http://www.cs.st-andrews.ac.uk/~james/RESEARCH/notanum.pdf</a>&gt;, but since</span>
-<a name="line-82"></a><span class='hs-comment'>-- the set of variables is visible in the type, we can provide stronger type</span>
-<a name="line-83"></a><span class='hs-comment'>-- safety guarantees.</span>
-<a name="line-84"></a><span class='hs-comment'>--</span>
-<a name="line-85"></a><span class='hs-comment'>-- There are longer examples in the @examples/@ folder:</span>
+<a name="line-56"></a><span class='hs-comment'>--</span>
+<a name="line-57"></a><span class='hs-comment'>-- @</span>
+<a name="line-58"></a><span class='hs-comment'>-- whnf :: 'Exp' a -&gt; 'Exp' a</span>
+<a name="line-59"></a><span class='hs-comment'>-- whnf (f :\@ a) = case whnf f of</span>
+<a name="line-60"></a><span class='hs-comment'>--   Lam b -&gt; whnf ('instantiate1' a b)</span>
+<a name="line-61"></a><span class='hs-comment'>--   f'    -&gt; f' :\@ a</span>
+<a name="line-62"></a><span class='hs-comment'>-- whnf e = e</span>
+<a name="line-63"></a><span class='hs-comment'>-- @</span>
+<a name="line-64"></a><span class='hs-comment'>--</span>
+<a name="line-65"></a><span class='hs-comment'>-- More exotic combinators for manipulating a 'Scope' can be imported from</span>
+<a name="line-66"></a><span class='hs-comment'>-- "Bound.Scope".</span>
+<a name="line-67"></a><span class='hs-comment'>--</span>
+<a name="line-68"></a><span class='hs-comment'>-- You can also retain names in your bound variables by using 'Bound.Name.Name'</span>
+<a name="line-69"></a><span class='hs-comment'>-- and the related combinators from "Bound.Name". They are not re-exported</span>
+<a name="line-70"></a><span class='hs-comment'>-- from this module by default.</span>
+<a name="line-71"></a><span class='hs-comment'>--</span>
+<a name="line-72"></a><span class='hs-comment'>-- The approach used in this package was first elaborated upon by Richard Bird</span>
+<a name="line-73"></a><span class='hs-comment'>-- and Ross Patterson</span>
+<a name="line-74"></a><span class='hs-comment'>-- in \"de Bruijn notation as a nested data type\", available from</span>
+<a name="line-75"></a><span class='hs-comment'>-- &lt;<a href="http://www.cs.uwyo.edu/~jlc/courses/5000_fall_08/debruijn_as_nested_datatype.pdf">http://www.cs.uwyo.edu/~jlc/courses/5000_fall_08/debruijn_as_nested_datatype.pdf</a>&gt;</span>
+<a name="line-76"></a><span class='hs-comment'>--</span>
+<a name="line-77"></a><span class='hs-comment'>-- However, the combinators they used required higher rank types. Here we</span>
+<a name="line-78"></a><span class='hs-comment'>-- demonstrate that the higher rank @gfold@ combinator they used isn't necessary</span>
+<a name="line-79"></a><span class='hs-comment'>-- to build the monad and use a monad transformer to encapsulate the novel</span>
+<a name="line-80"></a><span class='hs-comment'>-- recursion pattern in their generalized de Bruijn representation. It is named</span>
+<a name="line-81"></a><span class='hs-comment'>-- 'Scope' to match up with the terminology and usage pattern from Conor McBride</span>
+<a name="line-82"></a><span class='hs-comment'>-- and James McKinna's \"I am not a number: I am a free variable\", available</span>
+<a name="line-83"></a><span class='hs-comment'>-- from &lt;<a href="http://www.cs.st-andrews.ac.uk/~james/RESEARCH/notanum.pdf">http://www.cs.st-andrews.ac.uk/~james/RESEARCH/notanum.pdf</a>&gt;, but since</span>
+<a name="line-84"></a><span class='hs-comment'>-- the set of variables is visible in the type, we can provide stronger type</span>
+<a name="line-85"></a><span class='hs-comment'>-- safety guarantees.</span>
 <a name="line-86"></a><span class='hs-comment'>--</span>
-<a name="line-87"></a><span class='hs-comment'>-- &lt;https://github.com/ekmett/bound/tree/master/examples&gt;</span>
+<a name="line-87"></a><span class='hs-comment'>-- There are longer examples in the @examples/@ folder:</span>
 <a name="line-88"></a><span class='hs-comment'>--</span>
-<a name="line-89"></a><span class='hs-comment'>-- (1) /Simple.hs/ provides an untyped lambda calculus with recursive let</span>
-<a name="line-90"></a><span class='hs-comment'>--   bindings and includes an evaluator for the untyped lambda calculus and a</span>
-<a name="line-91"></a><span class='hs-comment'>--   longer example taken from Lennart Augustsson's "λ-calculus cooked four</span>
-<a name="line-92"></a><span class='hs-comment'>--   ways" available from &lt;<a href="http://www.augustsson.net/Darcs/Lambda/top.pdf">http://www.augustsson.net/Darcs/Lambda/top.pdf</a>&gt;</span>
-<a name="line-93"></a><span class='hs-comment'>--</span>
-<a name="line-94"></a><span class='hs-comment'>-- 2. /Derived.hs/ shows how much of the API can be automated with</span>
-<a name="line-95"></a><span class='hs-comment'>--    DeriveTraversable and adds combinators for building binders that support</span>
-<a name="line-96"></a><span class='hs-comment'>--    pattern matching.</span>
-<a name="line-97"></a><span class='hs-comment'>--</span>
-<a name="line-98"></a><span class='hs-comment'>-- 3. /Overkill.hs/ provides very strongly typed pattern matching many modern</span>
-<a name="line-99"></a><span class='hs-comment'>--   language extensions, including polymorphic kinds to ensure type safety.</span>
-<a name="line-100"></a><span class='hs-comment'>--   In general, the approach taken by Derived seems to deliver a better power</span>
-<a name="line-101"></a><span class='hs-comment'>--   to weight ratio.</span>
-<a name="line-102"></a><span class='hs-comment'>----------------------------------------------------------------------------</span>
-<a name="line-103"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Bound</span>
-<a name="line-104"></a>  <span class='hs-layout'>(</span>
-<a name="line-105"></a>  <span class='hs-comment'>-- * Manipulating user terms</span>
-<a name="line-106"></a>    <span class='hs-varid'>substitute</span>
-<a name="line-107"></a>  <span class='hs-layout'>,</span> <span class='hs-varid'>isClosed</span>
-<a name="line-108"></a>  <span class='hs-layout'>,</span> <span class='hs-varid'>closed</span>
-<a name="line-109"></a>  <span class='hs-comment'>-- * Scopes introduce bound variables</span>
-<a name="line-110"></a>  <span class='hs-layout'>,</span> <span class='hs-conid'>Scope</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span>
-<a name="line-111"></a>  <span class='hs-comment'>-- ** Abstraction over bound variables</span>
-<a name="line-112"></a>  <span class='hs-layout'>,</span> <span class='hs-varid'>abstract</span><span class='hs-layout'>,</span> <span class='hs-varid'>abstract1</span>
-<a name="line-113"></a>  <span class='hs-comment'>-- ** Instantiation of bound variables</span>
-<a name="line-114"></a>  <span class='hs-layout'>,</span> <span class='hs-varid'>instantiate</span><span class='hs-layout'>,</span> <span class='hs-varid'>instantiate1</span>
-<a name="line-115"></a>  <span class='hs-comment'>-- * Structures permitting substitution</span>
-<a name="line-116"></a>  <span class='hs-layout'>,</span> <span class='hs-conid'>Bound</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span>
-<a name="line-117"></a>  <span class='hs-layout'>,</span> <span class='hs-layout'>(</span><span class='hs-varop'>=&lt;&lt;&lt;</span><span class='hs-layout'>)</span>
-<a name="line-118"></a>  <span class='hs-comment'>-- * Conversion to Traditional de Bruijn</span>
-<a name="line-119"></a>  <span class='hs-layout'>,</span> <span class='hs-conid'>Var</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span>
-<a name="line-120"></a>  <span class='hs-layout'>,</span> <span class='hs-varid'>fromScope</span>
-<a name="line-121"></a>  <span class='hs-layout'>,</span> <span class='hs-varid'>toScope</span>
-<a name="line-122"></a>  <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
-<a name="line-123"></a>
-<a name="line-124"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Bound</span><span class='hs-varop'>.</span><span class='hs-conid'>Var</span>
-<a name="line-125"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Bound</span><span class='hs-varop'>.</span><span class='hs-conid'>Class</span>
-<a name="line-126"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Bound</span><span class='hs-varop'>.</span><span class='hs-conid'>Scope</span>
-<a name="line-127"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Bound</span><span class='hs-varop'>.</span><span class='hs-conid'>Term</span>
+<a name="line-89"></a><span class='hs-comment'>-- &lt;https://github.com/ekmett/bound/tree/master/examples&gt;</span>
+<a name="line-90"></a><span class='hs-comment'>--</span>
+<a name="line-91"></a><span class='hs-comment'>-- (1) /Simple.hs/ provides an untyped lambda calculus with recursive let</span>
+<a name="line-92"></a><span class='hs-comment'>--   bindings and includes an evaluator for the untyped lambda calculus and a</span>
+<a name="line-93"></a><span class='hs-comment'>--   longer example taken from Lennart Augustsson's "λ-calculus cooked four</span>
+<a name="line-94"></a><span class='hs-comment'>--   ways" available from &lt;<a href="http://foswiki.cs.uu.nl/foswiki/pub/USCS/InterestingPapers/AugustsonLambdaCalculus.pdf">http://foswiki.cs.uu.nl/foswiki/pub/USCS/InterestingPapers/AugustsonLambdaCalculus.pdf</a>&gt;</span>
+<a name="line-95"></a><span class='hs-comment'>--</span>
+<a name="line-96"></a><span class='hs-comment'>-- 2. /Derived.hs/ shows how much of the API can be automated with</span>
+<a name="line-97"></a><span class='hs-comment'>--    DeriveTraversable and adds combinators for building binders that support</span>
+<a name="line-98"></a><span class='hs-comment'>--    pattern matching.</span>
+<a name="line-99"></a><span class='hs-comment'>--</span>
+<a name="line-100"></a><span class='hs-comment'>-- 3. /Overkill.hs/ provides very strongly typed pattern matching many modern</span>
+<a name="line-101"></a><span class='hs-comment'>--   language extensions, including polymorphic kinds to ensure type safety.</span>
+<a name="line-102"></a><span class='hs-comment'>--   In general, the approach taken by Derived seems to deliver a better power</span>
+<a name="line-103"></a><span class='hs-comment'>--   to weight ratio.</span>
+<a name="line-104"></a><span class='hs-comment'>----------------------------------------------------------------------------</span>
+<a name="line-105"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Bound</span>
+<a name="line-106"></a>  <span class='hs-layout'>(</span>
+<a name="line-107"></a>  <span class='hs-comment'>-- * Manipulating user terms</span>
+<a name="line-108"></a>    <span class='hs-varid'>substitute</span>
+<a name="line-109"></a>  <span class='hs-layout'>,</span> <span class='hs-varid'>isClosed</span>
+<a name="line-110"></a>  <span class='hs-layout'>,</span> <span class='hs-varid'>closed</span>
+<a name="line-111"></a>  <span class='hs-comment'>-- * Scopes introduce bound variables</span>
+<a name="line-112"></a>  <span class='hs-layout'>,</span> <span class='hs-conid'>Scope</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span>
+<a name="line-113"></a>  <span class='hs-comment'>-- ** Abstraction over bound variables</span>
+<a name="line-114"></a>  <span class='hs-layout'>,</span> <span class='hs-varid'>abstract</span><span class='hs-layout'>,</span> <span class='hs-varid'>abstract1</span>
+<a name="line-115"></a>  <span class='hs-comment'>-- ** Instantiation of bound variables</span>
+<a name="line-116"></a>  <span class='hs-layout'>,</span> <span class='hs-varid'>instantiate</span><span class='hs-layout'>,</span> <span class='hs-varid'>instantiate1</span>
+<a name="line-117"></a>  <span class='hs-comment'>-- * Structures permitting substitution</span>
+<a name="line-118"></a>  <span class='hs-layout'>,</span> <span class='hs-conid'>Bound</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span>
+<a name="line-119"></a>  <span class='hs-layout'>,</span> <span class='hs-layout'>(</span><span class='hs-varop'>=&lt;&lt;&lt;</span><span class='hs-layout'>)</span>
+<a name="line-120"></a>  <span class='hs-comment'>-- * Conversion to Traditional de Bruijn</span>
+<a name="line-121"></a>  <span class='hs-layout'>,</span> <span class='hs-conid'>Var</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span>
+<a name="line-122"></a>  <span class='hs-layout'>,</span> <span class='hs-varid'>fromScope</span>
+<a name="line-123"></a>  <span class='hs-layout'>,</span> <span class='hs-varid'>toScope</span>
+<a name="line-124"></a>  <span class='hs-comment'>-- * Deriving instances </span>
+<a name="line-125"></a>  <span class='hs-layout'>,</span> <span class='hs-varid'>makeBound</span>
+<a name="line-126"></a>  <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
+<a name="line-127"></a>
+<a name="line-128"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Bound</span><span class='hs-varop'>.</span><span class='hs-conid'>Var</span>
+<a name="line-129"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Bound</span><span class='hs-varop'>.</span><span class='hs-conid'>Class</span>
+<a name="line-130"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Bound</span><span class='hs-varop'>.</span><span class='hs-conid'>Scope</span>
+<a name="line-131"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Bound</span><span class='hs-varop'>.</span><span class='hs-conid'>Term</span>
+<a name="line-132"></a><span class='hs-cpp'>#ifdef MIN_VERSION_template_haskell</span>
+<a name="line-133"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Bound</span><span class='hs-varop'>.</span><span class='hs-conid'>TH</span>
+<a name="line-134"></a><span class='hs-cpp'>#endif</span>
 </pre></body>
 </html>
