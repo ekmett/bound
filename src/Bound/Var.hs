@@ -36,7 +36,7 @@ import Control.Monad (liftM, ap)
 #if __GLASGOW_HASKELL__ < 710
 import Data.Foldable
 import Data.Traversable
-import Data.Monoid (mempty)
+import Data.Monoid (Monoid(..))
 #endif
 import Data.Hashable
 import Data.Hashable.Extras
