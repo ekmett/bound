@@ -1,3 +1,9 @@
+2
+-
+
+* GHC 8 support
+* Converted from `prelude-extras` to `transformers` + `transformers-compat` for the `Eq1`, `Ord1`, `Show1`, and `Read1` functionality.
+
 1.0.7
 ------
 * Added an `-f-template-haskell` option to allow disabling `template-haskell` support. This is an unsupported configuration but may be useful for expert users in sandbox configurations.
