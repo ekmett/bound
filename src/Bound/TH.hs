@@ -369,7 +369,9 @@ getPure name = do
         (conName, [ t1, t2 ])
       ForallC _ _ conName ->
          allTypeArgs conName
+#if MIN_VERSION_template_haskell(0,2,11)
       _ -> error "Not implemented"
+#endif
 
   return (findReturn lastTyVar (allTypeArgs `fmap` cons))
 #else
