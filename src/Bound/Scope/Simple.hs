@@ -79,13 +79,13 @@ import Data.Bytes.Put
 import Data.Bytes.Serial
 import Data.Data
 import Data.Foldable
+import Data.Functor.Classes
 import Data.Hashable
 import Data.Hashable.Extras
 import Data.Monoid
 import qualified Data.Serialize as Serialize
 import Data.Serialize (Serialize)
 import Data.Traversable
-import Prelude.Extras
 import Prelude hiding (foldr, mapM, mapM_)
 
 -------------------------------------------------------------------------------
@@ -128,7 +128,11 @@ instance Traversable f => Traversable (Scope b f) where
   traverse f (Scope a) = Scope <$> traverse (traverse f) a
   {-# INLINE traverse #-}
 
+#if __GLASGOW_HASKELL__ < 710
 instance (Functor f, Monad f) => Applicative (Scope b f) where
+#else
+instance Monad f => Applicative (Scope b f) where
+#endif
   pure a = Scope (return (F a))
   {-# INLINE pure #-}
   (<*>) = ap
@@ -150,33 +154,64 @@ instance MonadTrans (Scope b) where
   lift ma = Scope (liftM F ma)
   {-# INLINE lift #-}
 
-instance (Functor f, Eq b, Eq1 f, Eq a) => Eq  (Scope b f a) where
-  (==) = (==#)
-  {-# INLINE (==) #-}
-instance (Functor f, Eq b, Eq1 f)       => Eq1 (Scope b f)   where
-  a ==# b = unscope a ==# unscope b
-  {-# INLINE (==#) #-}
+#if (MIN_VERSION_transformers(0,5,0)) || !(MIN_VERSION_template_haskell(0,4,0))
+instance (Eq b, Eq1 f) => Eq1 (Scope b f)  where
+  liftEq f m n = liftEq (liftEq f) (unscope m) (unscope n)
 
-instance (Functor f, Ord b, Ord1 f, Ord a) => Ord  (Scope b f a) where
+instance (Ord b, Ord1 f) => Ord1 (Scope b f) where
+  liftCompare f m n = liftCompare (liftCompare f) (unscope m) (unscope n)
+
+instance (Show b, Show1 f) => Show1 (Scope b f) where
+  liftShowsPrec f g d m = showParen (d > 10) $
+    showString "Scope " . liftShowsPrec (liftShowsPrec f g) (liftShowList f g) 11 (unscope m)
+
+instance (Read b, Read1 f) => Read1 (Scope b f) where
+  liftReadsPrec f g d = readParen (d > 10) $ \r -> do
+    ("Scope", r') <- lex r
+    (s, r'') <- liftReadsPrec (liftReadsPrec f g) (liftReadList f g) 11 r'
+    return (Scope s, r'')
+
+instance (Eq b, Eq1 f, Eq a) => Eq (Scope b f a) where
+  (==) = eq1
+
+instance (Ord b, Ord1 f, Ord a) => Ord (Scope b f a) where
   compare = compare1
-  {-# INLINE compare #-}
-instance (Functor f, Ord b, Ord1 f)        => Ord1 (Scope b f) where
-  compare1 a b = unscope a `compare1` unscope b
-  {-# INLINE compare1 #-}
 
-instance (Functor f, Show b, Show1 f, Show a) => Show (Scope b f a) where
+instance (Show b, Show1 f, Show a) => Show (Scope b f a) where
   showsPrec = showsPrec1
+
+instance (Read b, Read1 f, Read a) => Read (Scope b f a) where
+  readsPrec = readsPrec1
+#else
+
+instance (Functor f, Eq b, Eq1 f) => Eq1 (Scope b f) where
+  eq1 m n = eq1 (unscope m) (unscope n)
+
+instance (Functor f, Ord b, Ord1 f) => Ord1 (Scope b f)
+  compare1 m n = compare1 (unscope m) (unscope n)
+
 instance (Functor f, Show b, Show1 f) => Show1 (Scope b f) where
   showsPrec1 d a = showParen (d > 10) $
     showString "Scope " . showsPrec1 11 (unscope a)
 
-instance (Functor f, Read b, Read1 f, Read a) => Read  (Scope b f a) where
-  readsPrec = readsPrec1
-instance (Functor f, Read b, Read1 f)         => Read1 (Scope b f) where
+instance (Functor f, Read b, Read1 f) => Read1 (Scope b f) where
   readsPrec1 d = readParen (d > 10) $ \r -> do
     ("Scope", r') <- lex r
     (s, r'') <- readsPrec1 11 r'
     return (Scope (fmap lower1 s), r'')
+
+instance (Functor f, Eq b, Eq1 f, Eq a) => Eq (Scope b f a) where
+  (==) = eq1
+
+instance (Functor f, Ord b, Ord1 f, Ord a) => Ord (Scope b f a) where
+  (==) = compare1
+
+instance (Functor f, Show b, Show1 f, Show a) => Show (Scope b f a) where
+  showsPrec = showsPrec1
+
+instance (Functor f, Read b, Read1 f, Read a) => Read (Scope b f a) where
+  readsPrec = readsPrec1
+#endif
 
 instance Bound (Scope b) where
   Scope m >>>= f = Scope $ m >>= \v -> case v of
@@ -184,11 +219,11 @@ instance Bound (Scope b) where
     F a -> liftM F (f a)
   {-# INLINE (>>>=) #-}
 
-instance (Hashable b, Monad f, Hashable1 f) => Hashable1 (Scope b f) where
+instance (Hashable b, Hashable1 f) => Hashable1 (Scope b f) where
   hashWithSalt1 n m = hashWithSalt1 n (unscope m)
   {-# INLINE hashWithSalt1 #-}
 
-instance (Hashable b, Monad f, Hashable1 f, Hashable a) => Hashable (Scope b f a) where
+instance (Hashable b, Hashable1 f, Hashable a) => Hashable (Scope b f a) where
   hashWithSalt n m = hashWithSalt1 n (unscope m)
   {-# INLINE hashWithSalt #-}
 

@@ -48,6 +48,7 @@ import Data.Bitraversable
 import Data.Bytes.Get
 import Data.Bytes.Put
 import Data.Bytes.Serial
+import Data.Functor.Classes
 #ifdef __GLASGOW_HASKELL__
 import Data.Data
 # if __GLASGOW_HASKELL__ >= 704
@@ -60,7 +61,6 @@ import Data.Serialize (Serialize)
 #if __GLASGOW_HASKELL__ < 710
 import Data.Word
 #endif
-import Prelude.Extras
 
 ----------------------------------------------------------------------------
 -- Bound and Free Variables
@@ -202,20 +202,45 @@ instance Bitraversable Var where
   bitraverse _ g (F a) = F <$> g a
   {-# INLINE bitraverse #-}
 
-instance Eq2 Var   where
-  (==##)     = (==)
-  {-# INLINE (==##) #-}
-instance Ord2 Var  where
-  compare2   = compare
-  {-# INLINE compare2 #-}
-instance Show2 Var where showsPrec2 = showsPrec
-instance Read2 Var where readsPrec2  = readsPrec
+#if (MIN_VERSION_transformers(0,5,0)) || !(MIN_VERSION_transformers(0,4,0))
+instance Eq2 Var where
+  liftEq2 f _ (B a) (B c) = f a c
+  liftEq2 _ g (F b) (F d) = g b d
+  liftEq2 _ _ _ _ = False
 
-instance Eq b   => Eq1   (Var b) where
-  (==#)      = (==)
-  {-# INLINE (==#) #-}
-instance Ord b  => Ord1  (Var b) where
-  compare1   = compare
-  {-# INLINE compare1 #-}
+instance Ord2 Var where
+  liftCompare2 f _ (B a) (B c) = f a c
+  liftCompare2 _ _ B{} F{} = LT
+  liftCompare2 _ _ F{} B{} = GT
+  liftCompare2 _ g (F b) (F d) = g b d
+
+instance Show2 Var where
+  liftShowsPrec2 f _ _ _ d (B a) = showsUnaryWith f "B" d a
+  liftShowsPrec2 _ _ h _ d (F a) = showsUnaryWith h "F" d a
+
+instance Read2 Var where
+  liftReadsPrec2 f _ h _ = readsData $ readsUnaryWith f "B" B `mappend` readsUnaryWith h "F" F
+
+instance Eq b => Eq1 (Var b) where
+  liftEq = liftEq2 (==)
+
+instance Ord b => Ord1 (Var b) where
+  liftCompare = liftCompare2 compare
+
+instance Show b => Show1 (Var b) where
+  liftShowsPrec = liftShowsPrec2 showsPrec showList
+
+instance Read b => Read1 (Var b) where
+  liftReadsPrec = liftReadsPrec2 readsPrec readList
+
+#else
+instance Eq2 Var   where eq2 = (==)
+instance Ord2 Var  where compare2   = compare
+instance Show2 Var where showsPrec2 = showsPrec
+instance Read2 Var where readsPrec2 = readsPrec
+
+instance Eq b   => Eq1   (Var b) where eq1 = (==)
+instance Ord b  => Ord1  (Var b) where compare1   = compare
 instance Show b => Show1 (Var b) where showsPrec1 = showsPrec
-instance Read b => Read1 (Var b) where readsPrec1  = readsPrec
+instance Read b => Read1 (Var b) where readsPrec1 = readsPrec
+#endif
