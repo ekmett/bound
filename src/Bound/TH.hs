@@ -236,7 +236,11 @@ constructBind name = do
   interpret =<< construct dec
 
 construct :: Dec -> Q [Components]
+#if MIN_VERSION_template_haskell(2,11,0)
+construct (DataD _ name tyvar _ constructors _) = do
+#else
 construct (DataD _ name tyvar constructors _) = do
+#endif
   var <- getPure name
   for constructors $ \con -> do
     case con of
@@ -331,7 +335,11 @@ getName (KindedTV name _) = name
 -- Returns candidate 
 getPure :: Name -> Q Name
 getPure name = do
+#if MIN_VERSION_template_haskell(2,11,0)
+  TyConI (DataD _ _ tyvr _ cons _) <- reify name
+#else
   TyConI (DataD _ _ tyvr cons _) <- reify name
+#endif
 
   let 
     findReturn :: Type -> [(Name, [Type])] -> Name
