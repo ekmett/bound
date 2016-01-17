@@ -59,6 +59,7 @@ import qualified Data.Binary as Binary
 import Data.Binary (Binary)
 import Data.Bitraversable
 import Data.Bytes.Serial
+import Data.Functor.Classes
 #ifdef __GLASGOW_HASKELL__
 import Data.Data
 # if __GLASGOW_HASKELL__ >= 704
@@ -70,7 +71,6 @@ import Data.Hashable.Extras
 import Data.Profunctor
 import qualified Data.Serialize as Serialize
 import Data.Serialize (Serialize)
-import Prelude.Extras
 
 -------------------------------------------------------------------------------
 -- Names
@@ -163,24 +163,45 @@ instance Comonad (Name n) where
   extend f w@(Name n _) = Name n (f w)
   {-# INLINE extend #-}
 
-instance Eq1   (Name b) where
-  (==#)      = (==)
-  {-# INLINE (==#) #-}
-instance Ord1  (Name b) where
-  compare1   = compare
-  {-# INLINE compare1 #-}
+#if MIN_VERSION_transformers(0,5,0) || !MIN_VERSION_transformers(0,4,0)
+
+instance Eq2 Name where
+  liftEq2 _ g (Name _ b) (Name _ d) = g b d
+
+instance Ord2 Name where
+  liftCompare2 _ g (Name _ b) (Name _ d) = g b d
+
+instance Show2 Name where
+  liftShowsPrec2 f _ h _ d (Name a b) = showsBinaryWith f h "Name" d a b
+
+instance Read2 Name where
+  liftReadsPrec2 f _ h _ = readsData $ readsBinaryWith f h "Name" Name
+
+instance Eq1 (Name b) where
+  liftEq f (Name _ b) (Name _ d) = f b d
+
+instance Ord1 (Name b) where
+  liftCompare f (Name _ b) (Name _ d) = f b d
+
+instance Show b => Show1 (Name b) where
+  liftShowsPrec f _ d (Name a b) = showsBinaryWith showsPrec f "Name" d a b
+
+instance Read b => Read1 (Name b) where
+  liftReadsPrec f _ = readsData $ readsBinaryWith readsPrec f "Name" Name
+
+#else
+
+instance Eq1   (Name b) where eq1 = (==)
+instance Ord1  (Name b) where compare1 = compare
 instance Show b => Show1 (Name b) where showsPrec1 = showsPrec
 instance Read b => Read1 (Name b) where readsPrec1 = readsPrec
 
--- these are slightly too restrictive, but still safe
-instance Eq2 Name   where
-  (==##)     = (==)
-  {-# INLINE (==##) #-}
-instance Ord2 Name  where
-  compare2   = compare
-  {-# INLINE compare2 #-}
+instance Eq2 Name   where eq2 = (==)
+instance Ord2 Name  where compare2   = compare
 instance Show2 Name where showsPrec2 = showsPrec
 instance Read2 Name where readsPrec2  = readsPrec
+
+#endif
 
 instance Serial2 Name where
   serializeWith2 pb pf (Name b a) = pb b >> pf a

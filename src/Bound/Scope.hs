@@ -80,13 +80,13 @@ import Data.Bytes.Get
 import Data.Bytes.Put
 import Data.Bytes.Serial
 import Data.Foldable
+import Data.Functor.Classes
 import Data.Hashable
 import Data.Hashable.Extras
 import Data.Monoid
 import qualified Data.Serialize as Serialize
 import Data.Serialize (Serialize)
 import Data.Traversable
-import Prelude.Extras
 import Prelude hiding (foldr, mapM, mapM_)
 import Data.Data
 
@@ -117,7 +117,6 @@ newtype Scope b f a = Scope { unscope :: f (Var b (f a)) }
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
   deriving Typeable
 #endif
-
 
 -------------------------------------------------------------------------------
 -- Instances
@@ -158,33 +157,63 @@ instance MonadTrans (Scope b) where
   lift m = Scope (return (F m))
   {-# INLINE lift #-}
 
-instance (Monad f, Eq b, Eq1 f, Eq a) => Eq  (Scope b f a) where
-  (==) = (==#)
-  {-# INLINE (==) #-}
-instance (Monad f, Eq b, Eq1 f)       => Eq1 (Scope b f)   where
-  a ==# b = fromScope a ==# fromScope b
-  {-# INLINE (==#) #-}
+instance (Monad f, Eq b, Eq1 f, Eq a) => Eq  (Scope b f a) where (==) = eq1
+instance (Monad f, Ord b, Ord1 f, Ord a) => Ord  (Scope b f a) where compare = compare1
 
-instance (Monad f, Ord b, Ord1 f, Ord a) => Ord  (Scope b f a) where
-  compare = compare1
-  {-# INLINE compare #-}
-instance (Monad f, Ord b, Ord1 f)        => Ord1 (Scope b f) where
+#if MIN_VERSION_transformers(0,5,0) || !(MIN_VERSION_transformers(0,4,0))
+
+--------------------------------------------------------------------------------
+-- * transformers 0.5 Data.Functor.Classes
+--------------------------------------------------------------------------------
+
+instance (Read b, Read1 f, Read a) => Read  (Scope b f a) where readsPrec = readsPrec1
+instance (Show b, Show1 f, Show a) => Show (Scope b f a) where showsPrec = showsPrec1
+
+instance (Monad f, Eq b, Eq1 f) => Eq1 (Scope b f) where
+  liftEq f m n = liftEq (liftEq f) (fromScope m) (fromScope n)
+
+instance (Monad f, Ord b, Ord1 f) => Ord1 (Scope b f) where
+  liftCompare f m n = liftCompare (liftCompare f) (fromScope m) (fromScope n)
+
+instance (Show b, Show1 f) => Show1 (Scope b f) where
+  liftShowsPrec f g d m = showsUnaryWith (liftShowsPrec (liftShowsPrec f' g') (liftShowList f' g')) "Scope" d (unscope m) where
+    f' = liftShowsPrec f g
+    g' = liftShowList f g
+
+instance (Read b, Read1 f) => Read1 (Scope b f) where
+  liftReadsPrec f g = readsData $ readsUnaryWith (liftReadsPrec (liftReadsPrec f' g') (liftReadList f' g')) "Scope" Scope where
+    f' = liftReadsPrec f g
+    g' = liftReadList f g
+
+#else
+
+--------------------------------------------------------------------------------
+-- * transformers 0.4 Data.Functor.Classes
+--------------------------------------------------------------------------------
+
+instance (Functor f, Read b, Read1 f, Read a) => Read  (Scope b f a) where readsPrec = readsPrec1
+instance (Functor f, Show b, Show1 f, Show a) => Show (Scope b f a) where showsPrec = showsPrec1
+
+instance (Monad f, Eq b, Eq1 f) => Eq1 (Scope b f) where
+  eq1 a b = eq1 (fromScope a) (fromScope b)
+
+instance (Monad f, Ord b, Ord1 f) => Ord1 (Scope b f) where
   compare1 a b = fromScope a `compare1` fromScope b
-  {-# INLINE compare1 #-}
 
-instance (Functor f, Show b, Show1 f, Show a) => Show (Scope b f a) where
-  showsPrec = showsPrec1
+newtype Lift1 f a = Lift1 { lower1 :: f a }
+instance (Show1 f, Show a) => Show (Lift1 f a) where showsPrec d (Lift1 m) = showsPrec1 d m
+instance (Read1 f, Read a) => Read (Lift1 f a) where readsPrec d (Lift1 m) = readsPrec1 d m
+
 instance (Functor f, Show b, Show1 f) => Show1 (Scope b f) where
   showsPrec1 d a = showParen (d > 10) $
     showString "Scope " . showsPrec1 11 (fmap (fmap Lift1) (unscope a))
 
-instance (Functor f, Read b, Read1 f, Read a) => Read  (Scope b f a) where
-  readsPrec = readsPrec1
-instance (Functor f, Read b, Read1 f)         => Read1 (Scope b f) where
+instance (Functor f, Read b, Read1 f) => Read1 (Scope b f) where
   readsPrec1 d = readParen (d > 10) $ \r -> do
     ("Scope", r') <- lex r
     (s, r'') <- readsPrec1 11 r'
     return (Scope (fmap (fmap lower1) s), r'')
+#endif
 
 instance Bound (Scope b) where
   Scope m >>>= f = Scope (liftM (fmap (>>= f)) m)
