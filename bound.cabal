@@ -86,7 +86,7 @@ library
     profunctors      >= 3.3     && < 6,
     template-haskell >= 2.7     && < 3,
     transformers     >= 0.2     && < 0.6,
-    transformers-compat >= 0.3  && < 1
+    transformers-compat >= 0.5  && < 1
 
   ghc-options: -Wall -O2 -fspec-constr -fdicts-cheap -funbox-strict-fields
 
