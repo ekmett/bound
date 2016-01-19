@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 module Main where
 
 -- this is a simple example where lambdas only bind a single variable at a time
@@ -11,7 +12,7 @@ import Control.Monad
 import Control.Monad.Trans.Class
 import Control.Applicative
 import Prelude hiding (foldr,abs)
-import Prelude.Extras
+import Data.Functor.Classes
 import Bound
 import System.Exit
 
@@ -59,10 +60,37 @@ instance Monad Exp where
   Let bs b >>= f = Let (map (>>>= f) bs) (b >>>= f)
 
 -- these 4 classes are needed to help Eq, Ord, Show and Read pass through Scope
-instance Eq1 Exp      where (==#)      = (==)
-instance Ord1 Exp     where compare1   = compare
+#if (MIN_VERSION_transformers(0,5,0)) || !(MIN_VERSION_transformers(0,4,0))
+instance Eq1 Exp where
+  liftEq f (V a) (V b) = f a b
+  liftEq f (a :@ b) (c :@ d) = liftEq f a c && liftEq f b d
+  liftEq f (Lam m) (Lam n) = liftEq f m n 
+  liftEq f (Let xs b) (Let ys c) = liftEq (liftEq f) xs ys && liftEq f b c
+  liftEq _ _ _ = False
+
+instance Ord1 Exp where
+  liftCompare f (V a) (V b) = f a b
+  liftCompare _ V{} _ = LT
+  liftCompare _ _ V{} = GT
+  liftCompare f (a :@ b) (c :@ d) = liftCompare f a c `mappend` liftCompare f b d
+  liftCompare _ (_ :@ _) _  `= LT
+  liftCompare _ (Lam _) (_ :@ _) = GT
+  liftCompare f (Lam m) (Lam n) = liftCompare f m n 
+  liftCompare f (Let xs b) (Let ys c) = liftCompare (liftCompare f) xs ys `mappend` liftCompare f b c
+  liftCompare _ _ (Let _ _) = LT
+
+-- ugh...
+instance Show1 Exp where
+  liftShowsPrec = error "I'm too lazy to evaluate this"
+
+instance Read1 Exp where
+  liftReadsPrec = error "I'm too lazy to evaluate this"
+#else
+instance Eq1 Exp      where eq1 = (==)
+instance Ord1 Exp     where compare1 = compare
 instance Show1 Exp    where showsPrec1 = showsPrec
 instance Read1 Exp    where readsPrec1 = readsPrec
+#endif
 
 -- | Compute the normal form of an expression
 nf :: Exp a -> Exp a
