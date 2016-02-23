@@ -74,6 +74,7 @@ import Control.Applicative (Applicative, pure, (<*>))
 -- ghci| data Exp a = V a | App (Exp a) (Exp a) | Lam (Scope () Exp a) | I Int deriving (Functor, Read, Read1, Show, Show1)
 -- ghci| makeBound ''Exp
 -- ghci| :}
+-- @
 --
 -- If @DeriveAnyClass@ is not used the instances must be declared explicitly:
 --
