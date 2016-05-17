@@ -80,7 +80,7 @@
 -- recursion pattern in their generalized de Bruijn representation. It is named
 -- 'Scope' to match up with the terminology and usage pattern from Conor McBride
 -- and James McKinna's \"I am not a number: I am a free variable\", available
--- from <http://www.cs.st-andrews.ac.uk/~james/RESEARCH/notanum.pdf>, but since
+-- from <http://www.cs.ru.nl/~james/RESEARCH/haskell2004.pdf>, but since
 -- the set of variables is visible in the type, we can provide stronger type
 -- safety guarantees.
 --
