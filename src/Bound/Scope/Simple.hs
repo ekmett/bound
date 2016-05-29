@@ -154,7 +154,7 @@ instance MonadTrans (Scope b) where
   lift ma = Scope (liftM F ma)
   {-# INLINE lift #-}
 
-#if (MIN_VERSION_transformers(0,5,0)) || !(MIN_VERSION_template_haskell(0,4,0))
+#if (MIN_VERSION_transformers(0,5,0)) || !(MIN_VERSION_transformers(0,4,0))
 instance (Eq b, Eq1 f) => Eq1 (Scope b f)  where
   liftEq f m n = liftEq (liftEq f) (unscope m) (unscope n)
 
@@ -187,7 +187,7 @@ instance (Read b, Read1 f, Read a) => Read (Scope b f a) where
 instance (Functor f, Eq b, Eq1 f) => Eq1 (Scope b f) where
   eq1 m n = eq1 (unscope m) (unscope n)
 
-instance (Functor f, Ord b, Ord1 f) => Ord1 (Scope b f)
+instance (Functor f, Ord b, Ord1 f) => Ord1 (Scope b f) where
   compare1 m n = compare1 (unscope m) (unscope n)
 
 instance (Functor f, Show b, Show1 f) => Show1 (Scope b f) where
@@ -198,13 +198,13 @@ instance (Functor f, Read b, Read1 f) => Read1 (Scope b f) where
   readsPrec1 d = readParen (d > 10) $ \r -> do
     ("Scope", r') <- lex r
     (s, r'') <- readsPrec1 11 r'
-    return (Scope (fmap lower1 s), r'')
+    return (Scope s, r'')
 
 instance (Functor f, Eq b, Eq1 f, Eq a) => Eq (Scope b f a) where
   (==) = eq1
 
 instance (Functor f, Ord b, Ord1 f, Ord a) => Ord (Scope b f a) where
-  (==) = compare1
+  compare = compare1
 
 instance (Functor f, Show b, Show1 f, Show a) => Show (Scope b f a) where
   showsPrec = showsPrec1
