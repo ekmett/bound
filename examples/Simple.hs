@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 module Main where
 
 -- this is a simple example where lambdas only bind a single variable at a time
@@ -11,7 +12,7 @@ import Control.Monad
 import Control.Monad.Trans.Class
 import Control.Applicative
 import Prelude hiding (foldr,abs)
-import Prelude.Extras
+import Data.Functor.Classes 
 import Bound
 import System.Exit
 
@@ -22,7 +23,22 @@ data Exp a
   | Exp a :@ Exp a
   | Lam (Scope () Exp a)
   | Let [Scope Int Exp a] (Scope Int Exp a)
-  deriving (Eq,Ord,Show,Read)
+  deriving (Eq)
+
+#if MIN_VERSION_transformers(0,5,0) || !MIN_VERSION_transformers(0,4,0)
+instance Eq1 Exp where
+  liftEq g (V a) (V b) = g a b
+  liftEq g (a :@ a') (b :@ b') = liftEq g a b && liftEq g a' b'
+  liftEq g (Lam a) (Lam b) = liftEq g a b
+  liftEq g (Let a a') (Let b b') =
+      liftEq (liftEq g) a b && liftEq g a' b'
+  liftEq _ _ _ = False
+
+#else
+
+-- these 4 classes are needed to help Eq, Ord, Show and Read pass through Scope
+instance Eq1 Exp      where eq1        = (==)
+#endif
 
 -- | A smart constructor for Lam
 --
@@ -57,12 +73,6 @@ instance Monad Exp where
   (x :@ y) >>= f = (x >>= f) :@ (y >>= f)
   Lam e    >>= f = Lam (e >>>= f)
   Let bs b >>= f = Let (map (>>>= f) bs) (b >>>= f)
-
--- these 4 classes are needed to help Eq, Ord, Show and Read pass through Scope
-instance Eq1 Exp      where (==#)      = (==)
-instance Ord1 Exp     where compare1   = compare
-instance Show1 Exp    where showsPrec1 = showsPrec
-instance Read1 Exp    where readsPrec1 = readsPrec
 
 -- | Compute the normal form of an expression
 nf :: Exp a -> Exp a

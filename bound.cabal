@@ -103,8 +103,8 @@ test-suite Simple
   build-depends:
     base,
     bound,
-    prelude-extras,
-    transformers
+    transformers,
+    transformers-compat
 
 test-suite doctests
   type:    exitcode-stdio-1.0
@@ -114,6 +114,6 @@ test-suite doctests
   build-depends:
     base,
     directory >= 1.0 && < 1.3,
-    doctest   >= 0.9 && < 0.10,
+    doctest   >= 0.9 && < 0.12,
     filepath,
-    vector    >= 0.9 && < 0.11
+    vector    >= 0.9 && < 0.12

@@ -202,7 +202,8 @@ instance (Monad f, Ord b, Ord1 f) => Ord1 (Scope b f) where
 
 newtype Lift1 f a = Lift1 { lower1 :: f a }
 instance (Show1 f, Show a) => Show (Lift1 f a) where showsPrec d (Lift1 m) = showsPrec1 d m
-instance (Read1 f, Read a) => Read (Lift1 f a) where readsPrec d (Lift1 m) = readsPrec1 d m
+instance (Read1 f, Read a) => Read (Lift1 f a) where
+    readsPrec d m = fmap (first Lift1) $ readsPrec1 d m
 
 instance (Functor f, Show b, Show1 f) => Show1 (Scope b f) where
   showsPrec1 d a = showParen (d > 10) $
