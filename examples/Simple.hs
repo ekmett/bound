@@ -9,7 +9,6 @@ import Data.Foldable hiding (notElem)
 import Data.Maybe (fromJust)
 import Data.Traversable
 import Control.Monad
-import Control.Monad.Trans.Class
 import Control.Applicative
 import Prelude hiding (foldr,abs)
 import Data.Functor.Classes 
@@ -166,11 +165,12 @@ prettyWith :: [String] -> Exp String -> String
 prettyWith vs t = prettyPrec (filter (`notElem` toList t) vs) False 0 t ""
 
 pretty :: Exp String -> String
-pretty = prettyWith $ [ [i] | i <- ['a'..'z']] ++ [i : show j | j <- [1..], i <- ['a'..'z'] ]
+pretty = prettyWith $ [ [i] | i <- ['a'..'z']] ++ [i : show j | j <- [1 :: Int ..], i <- ['a'..'z'] ]
 
 pp :: Exp String -> IO ()
 pp = putStrLn . pretty
 
+main :: IO ()
 main = do
   pp cooked
   let result = nf cooked
