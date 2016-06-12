@@ -106,6 +106,31 @@ test-suite Simple
     transformers,
     transformers-compat
 
+test-suite Overkill
+  type: exitcode-stdio-1.0
+  main-is: Overkill.hs
+  hs-source-dirs: examples
+  ghc-options: -Wall -threaded -main-is Overkill
+  build-depends:
+    base,
+    bound,
+    transformers,
+    transformers-compat,
+    vector
+  if !impl(ghc >= 7.8)
+    buildable: False
+
+test-suite Deriving
+  type: exitcode-stdio-1.0
+  main-is: Deriving.hs
+  hs-source-dirs: examples
+  ghc-options: -Wall -threaded -main-is Deriving
+  build-depends:
+    base,
+    bound,
+    transformers,
+    transformers-compat
+
 test-suite doctests
   type:    exitcode-stdio-1.0
   main-is: doctests.hs

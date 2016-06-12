@@ -1,12 +1,16 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE TypeOperators #-}
 
-{-# OPTIONS_GHC -fwarn-incomplete-patterns #-}
+{-# OPTIONS_GHC -fwarn-incomplete-patterns -fno-warn-orphans #-}
 
 module Overkill where
+
+-- Dara.Functor.Classes in transformers 0.4.0 are totally different
+#if MIN_VERSION_transformers(0,5,0) || !MIN_VERSION_transformers(0,4,0)
 
 import Data.Vector as Vector hiding ((++), map)
 import Data.List as List
@@ -16,7 +20,7 @@ import Data.Monoid (Monoid(..))
 import Control.Monad
 import Control.Applicative
 import Prelude hiding (foldr)
-import Prelude.Extras
+import Data.Functor.Classes
 import Data.Type.Equality
 import Bound
 
@@ -24,8 +28,11 @@ infixl 9 :@
 infixr 5 :>
 
 -- little orphan instances
-instance Show1 Vector where showsPrec1 = showsPrec
-instance Eq1 Vector where (==#) = (==)
+instance Show1 Vector where
+    liftShowsPrec _ sl _ v = sl (Vector.toList v)
+
+instance Eq1 Vector where
+    liftEq eq v u = Vector.and (Vector.zipWith eq v u)
 
 data Exp a
   = Var a
@@ -79,24 +86,24 @@ instance Monad Exp where
   Lam p e  >>= f = Lam (p >>>= f) (e >>>= f)
   Let bs e >>= f = Let (fmap (>>>= f) bs) (e >>>= f)
 
-instance Eq a => Eq (Exp a) where (==) = (==#)
+instance Eq a => Eq (Exp a) where (==) = eq1
 instance Eq1 Exp where
-  Var a     ==# Var b     = a == b
-  (a :@ b)  ==# (c :@ d)  = a ==# c && b ==# d
-  Lam ps a  ==# Lam qs b  =
-    case eqPat' ps qs of
+  liftEq eq (Var a)    (Var b)     = eq a b
+  liftEq eq (a :@ a')  (b :@ b')   = liftEq eq a b && liftEq eq a' b'
+  liftEq eq (Lam ps a) (Lam qs b)  =
+    case eqPat' eq ps qs of
       Nothing -> False
-      Just Refl -> a ==# b
+      Just Refl -> liftEq eq a b
 
-  Let as a  ==# Let bs b  = as == bs && a ==# b
-  _         ==# _         = False
+  liftEq eq (Let as a) (Let bs b)  = liftEq (liftEq eq) as bs && liftEq eq a b
+  liftEq _  _          _           = False
 
 instance Show a => Show (Exp a) where showsPrec = showsPrec1
 instance Show1 Exp where
-  showsPrec1 d (Var a)    = showParen (d > 10) $ showString "Var " . showsPrec 11 a
-  showsPrec1 d (a :@ b)   = showParen (d > 9) $ showsPrec1 9 a . showString " :@ " . showsPrec1 10 b
-  showsPrec1 d (Lam ps b) = showParen (d > 10) $ showString "Lam " . showsPrec1 11 ps . showChar ' ' . showsPrec1 11 b
-  showsPrec1 d (Let bs b) = showParen (d > 10) $ showString "Let " . showsPrec1 11 bs . showChar ' ' . showsPrec1 11 b
+  liftShowsPrec s _ d (Var a)     = showParen (d > 10) $ showString "Var " . s 11 a
+  liftShowsPrec s sl d (a :@ b)   = showParen (d > 9)  $ liftShowsPrec s sl 9 a . showString " :@ " . liftShowsPrec s sl 10 b
+  liftShowsPrec s sl d (Lam ps b) = showParen (d > 10) $ showString "Lam " . liftShowsPrec s sl 11 ps . showChar ' ' . liftShowsPrec s sl 11 b
+  liftShowsPrec s sl d (Let bs b) = showParen (d > 10) $ showString "Let " . liftShowsPrec (liftShowsPrec s sl) (liftShowList s sl) 11 bs . showChar ' ' . liftShowsPrec s sl 11 b
 
 -- * smart lam
 
@@ -142,39 +149,40 @@ let_ bs b = Let (Vector.fromList $ map (abstr . snd) bs) (abstr b)
 
 -- ** A Kind of Shape
 
-eqPat :: (Eq1 f, Eq a) => Pat b f a -> Pat b' f a -> Bool
-eqPat VarP        VarP        = True
-eqPat WildP       WildP       = True
-eqPat (AsP p)     (AsP q)     = eqPat p q
-eqPat (ConP g ps) (ConP h qs) = g == h  && eqPats ps qs
-eqPat (ViewP e p) (ViewP f q) = e ==# f && eqPat p q
-eqPat _ _ = False
+eqPat :: (Eq1 f) => (a -> b -> Bool) -> Pat i f a -> Pat i' f b -> Bool
+eqPat _  VarP        VarP        = True
+eqPat _  WildP       WildP       = True
+eqPat eq (AsP p)     (AsP q)     = eqPat eq p q
+eqPat eq (ConP g ps) (ConP h qs) = g == h  && eqPats eq ps qs
+eqPat eq (ViewP e p) (ViewP f q) = liftEq eq e f && eqPat eq p q
+eqPat _ _ _ = False
 
 -- The same as eqPat, but if the patterns are equal, it returns a
 -- proof that their type arguments are the same.
-eqPat' :: (Eq1 f, Eq a) => Pat b f a -> Pat b' f a -> Maybe (b :~: b')
-eqPat' VarP VarP = Just Refl
-eqPat' WildP WildP = Just Refl
-eqPat' (AsP p) (AsP q) = do
-  Refl <- eqPat' p q
+eqPat' :: (Eq1 f) => (a -> a' -> Bool) -> Pat b f a -> Pat b' f a' -> Maybe (b :~: b')
+eqPat' _  VarP VarP = Just Refl
+eqPat' _  WildP WildP = Just Refl
+eqPat' eq (AsP p) (AsP q) = do
+  Refl <- eqPat' eq p q
   Just Refl
-eqPat' (ConP g ps) (ConP h qs) = do
+eqPat' eq (ConP g ps) (ConP h qs) = do
   guard (g == h)
-  Refl <- eqPats' ps qs
+  Refl <- eqPats' eq ps qs
   Just Refl
-eqPat' (ViewP e p) (ViewP f q) = guard (e ==# f) >> eqPat' p q
-eqPat' _ _ = Nothing
+eqPat' eq (ViewP e p) (ViewP f q) = guard (liftEq eq e f) >> eqPat' eq p q
+eqPat' _ _ _ = Nothing
 
-instance Eq1 f   => Eq1 (Pat b f)        where (==#) = eqPat
-instance (Eq1 f, Eq a) => Eq (Pat b f a) where (==) = eqPat
+instance Eq1 f   => Eq1 (Pat b f)        where liftEq = eqPat
+instance (Eq1 f, Eq a) => Eq (Pat b f a) where (==) = eq1
 
-instance Show1 f => Show1 (Pat b f) where showsPrec1 = showsPrec
-instance (Show1 f, Show a) => Show (Pat b f a) where
-  showsPrec _ VarP        = showString "VarP"
-  showsPrec _ WildP       = showString "WildP"
-  showsPrec d (AsP p)     = showParen (d > 10) $ showString "AsP " . showsPrec 11 p
-  showsPrec d (ConP g ps) = showParen (d > 10) $ showString "ConP " . showsPrec 11 g . showChar ' ' . showsPrec 11 ps
-  showsPrec d (ViewP e p) = showParen (d > 10) $ showString "ViewP " . showsPrec1 11 e . showChar ' ' . showsPrec 11 p
+instance (Show1 f, Show a) => Show (Pat b f a) where showsPrec = showsPrec1
+
+instance Show1 f => Show1 (Pat b f) where
+  liftShowsPrec _ _  _ VarP        = showString "VarP"
+  liftShowsPrec _ _  _ WildP       = showString "WildP"
+  liftShowsPrec s sl d (AsP p)     = showParen (d > 10) $ showString "AsP " . liftShowsPrec s sl 11 p
+  liftShowsPrec s sl d (ConP g ps) = showParen (d > 10) $ showString "ConP " . showsPrec 11 g . showChar ' ' . liftShowsPrec s sl 11 ps
+  liftShowsPrec s sl d (ViewP e p) = showParen (d > 10) $ showString "ViewP " . liftShowsPrec s sl 11 e . showChar ' ' . liftShowsPrec s sl 11 p
 
 instance Functor f => Functor (Pat b f) where
   fmap _ VarP = VarP
@@ -204,29 +212,29 @@ instance Bound (Pat b) where
   ViewP e p >>>= f = ViewP (e >>= f) (p >>>= f)
 
 -- ** Pats
-eqPats :: (Eq1 f, Eq a) => Pats bs f a -> Pats bs' f a -> Bool
-eqPats NilP      NilP      = True
-eqPats (p :> ps) (q :> qs) = eqPat p q && eqPats ps qs
-eqPats _         _         = False
+eqPats :: (Eq1 f) => (a -> b -> Bool) -> Pats bs f a -> Pats bs' f b -> Bool
+eqPats _  NilP      NilP      = True
+eqPats eq (p :> ps) (q :> qs) = eqPat eq p q && eqPats eq ps qs
+eqPats _  _         _         = False
 
 -- Like eqPats, but if the patses are equal, it returns a proof that their
 -- type arguments are the same.
-eqPats' :: (Eq1 f, Eq a) => Pats bs f a -> Pats bs' f a -> Maybe (bs :~: bs')
-eqPats' NilP NilP = Just Refl
-eqPats' (p :> ps) (q :> qs) = do
-  Refl <- eqPat' p q
-  Refl <- eqPats' ps qs
+eqPats' :: (Eq1 f) => (a -> a' -> Bool) -> Pats bs f a -> Pats bs' f a' -> Maybe (bs :~: bs')
+eqPats' _  NilP NilP = Just Refl
+eqPats' eq (p :> ps) (q :> qs) = do
+  Refl <- eqPat' eq p q
+  Refl <- eqPats' eq ps qs
   Just Refl
-eqPats' _ _ = Nothing
+eqPats' _ _ _ = Nothing
 
-instance Eq1 f         => Eq1 (Pats bs f)   where (==#) = eqPats
-instance (Eq1 f, Eq a) => Eq  (Pats bs f a) where (==)  = eqPats
+instance Eq1 f         => Eq1 (Pats bs f)   where liftEq = eqPats
+instance (Eq1 f, Eq a) => Eq  (Pats bs f a) where (==)  = eq1
 
 instance (Show1 f, Show a) => Show (Pats bs f a) where showsPrec = showsPrec1
 instance Show1 f => Show1 (Pats bs f) where
-  showsPrec1 _ NilP      = showString "NilP"
-  showsPrec1 d (p :> ps) = showParen (d > 5) $
-    showsPrec1 6 p . showString " :> " . showsPrec1 5 ps
+  liftShowsPrec _ _  _ NilP      = showString "NilP"
+  liftShowsPrec s sl d (p :> ps) = showParen (d > 5) $
+    liftShowsPrec s sl 6 p . showString " :> " . liftShowsPrec s sl 5 ps
 
 instance Functor f => Functor (Pats bs f) where
   fmap _ NilP = NilP
@@ -339,5 +347,6 @@ instance Show (Path i) where
 --
 -- >>> lam (conp "Hello" [varp "x", wildp]) (Var "y")
 -- Lam (ConP "Hello" (VarP :> WildP :> NilP)) (Scope (Var (F (Var "y"))))
+#endif
 main :: IO ()
 main = return ()
