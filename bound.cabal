@@ -19,7 +19,7 @@ description:
    and we traverse to find free variables, and use the Monad to perform
    substitution that avoids bound variables.
    .
-   Slides describing and motivating this approach to name binding are available 
+   Slides describing and motivating this approach to name binding are available
    online at:
    .
    <http://www.slideshare.net/ekmett/bound-making-de-bruijn-succ-less>
@@ -30,7 +30,7 @@ description:
    With generalized de Bruijn term you can 'lift' whole trees instead of just
    applying 'succ' to individual variables, weakening the all variables bound
    by a scope and greatly speeding up instantiation. By giving binders more
-   structure we permit easy simultaneous substitution and further speed up 
+   structure we permit easy simultaneous substitution and further speed up
    instantiation.
 
 extra-source-files:
@@ -130,6 +130,20 @@ test-suite Deriving
     bound,
     transformers,
     transformers-compat
+
+test-suite Imperative
+  type: exitcode-stdio-1.0
+  main-is: Imperative.hs
+  hs-source-dirs: examples
+  ghc-options: -Wall -threaded -main-is Imperative
+  build-depends:
+    base,
+    bound,
+    transformers,
+    transformers-compat,
+    void
+  if !impl(ghc >= 7.10)
+    buildable: False
 
 test-suite doctests
   type:    exitcode-stdio-1.0
