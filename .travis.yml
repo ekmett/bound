@@ -9,8 +9,8 @@ matrix:
       addons: {apt: {packages: [cabal-install-1.16,ghc-7.6.3], sources: [hvr-ghc]}}
     - env: CABALVER=1.18 GHCVER=7.8.4
       addons: {apt: {packages: [cabal-install-1.18,ghc-7.8.4], sources: [hvr-ghc]}}
-    - env: CABALVER=1.22 GHCVER=7.10.2
-      addons: {apt: {packages: [cabal-install-1.22,ghc-7.10.2],sources: [hvr-ghc]}}
+    - env: CABALVER=1.22 GHCVER=7.10.3
+      addons: {apt: {packages: [cabal-install-1.22,ghc-7.10.3],sources: [hvr-ghc]}}
     - env: CABALVER=1.24 GHCVER=8.0.1
       addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.1],sources: [hvr-ghc]}}
     - env: CABALVER=head GHCVER=head
@@ -22,7 +22,9 @@ matrix:
 before_install:
  - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
  - export CABAL=cabal-$CABALVER
+ - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
  - $CABAL --version
+ - ghc-pkg list | grep Cabal
 
 install:
  - travis_retry $CABAL update
@@ -33,6 +35,7 @@ script:
  - $CABAL configure -v2 --enable-tests
  - $CABAL build
  - $CABAL test
+ - $CABAL haddock
  - $CABAL sdist
  - export SRC_TGZ=$($CABAL info . | awk '{print $2 ".tar.gz";exit}') ;
    cd dist/;
