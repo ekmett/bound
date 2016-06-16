@@ -142,8 +142,6 @@ test-suite Imperative
     transformers,
     transformers-compat,
     void
-  if !impl(ghc >= 7.10)
-    buildable: False
 
 test-suite doctests
   type:    exitcode-stdio-1.0
