@@ -8,10 +8,13 @@ module Imperative where
 -- statement.
 
 import Bound
+import Control.Applicative
 import Control.Monad (ap)
 import Control.Monad.Trans.Class (lift)
+import Data.Foldable
 import Data.Functor.Identity
 import Data.IORef
+import Data.Traversable
 import Data.Void (Void, absurd)
 
 
@@ -38,6 +41,7 @@ instance Applicative Operand where
   (<*>) = ap
 
 instance Monad Operand where
+  return = pure
   Lit i >>= _ = Lit i
   Var x >>= f = f x
 
@@ -69,7 +73,7 @@ data Prog operand a
 -- thing. We want to be able to replace those variables with operand values, and
 -- that would not be possible if variables were allowed to appear inside Prog
 -- but outside of an operand.
-pInstantiate1 :: Monad operand
+pInstantiate1 :: (Applicative operand, Monad operand)
               => operand a
               -> Prog (Scope () operand) a
               -> Prog operand a
@@ -78,7 +82,7 @@ pInstantiate1 x (Add o1 o2 cc) = Add (instantiate1 x o1)
                                      (instantiate1 x o2)
                                      (pInstantiate1 (lift x) cc)
 
-pAbstract1 :: (Monad operand, Eq a)
+pAbstract1 :: (Applicative operand, Monad operand, Eq a)
            => a
            -> Prog operand a
            -> Prog (Scope () operand) a
@@ -159,7 +163,9 @@ data Prog' operand identity a
 -- longer instantiate them with operands. Instead, we'll have to instantiate
 -- them with a value which both (Operand a) and (Identity a) can contain:
 -- a free variable.
-pInstantiate1' :: (Monad operand, Monad identity)
+pInstantiate1' :: ( Applicative operand, Monad operand
+                  , Applicative identity, Monad identity
+                  )
                => a
                -> Prog' (Scope () operand) (Scope () identity) a
                -> Prog' operand identity a
@@ -171,7 +177,10 @@ pInstantiate1' x (Add' o1 o2 cc) = Add' (instantiate1 (pure x) o1)
                                         (instantiate1 (pure x) o2)
                                         (pInstantiate1' x cc)
 
-pAbstract1' :: (Monad operand, Monad identity, Eq a)
+pAbstract1' :: ( Applicative operand, Monad operand
+               , Applicative identity, Monad identity
+               , Eq a
+               )
             => a
             -> Prog' operand identity a
             -> Prog' (Scope () operand) (Scope () identity) a
