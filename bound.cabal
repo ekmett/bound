@@ -142,8 +142,6 @@ test-suite Imperative
     transformers,
     transformers-compat,
     void
-  if !impl(ghc >= 7.10)
-    buildable: False
 
 test-suite doctests
   type:    exitcode-stdio-1.0
@@ -155,4 +153,5 @@ test-suite doctests
     directory >= 1.0 && < 1.3,
     doctest   >= 0.9 && < 0.12,
     filepath,
-    vector    >= 0.9 && < 0.12
+    vector    >= 0.9 && < 0.12,
+    void

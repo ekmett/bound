@@ -18,7 +18,9 @@ main = getSources >>= \sources -> doctest $
   : map ("-package="++) deps ++ sources
 
 getSources :: IO [FilePath]
-getSources = filter (isSuffixOf ".hs") <$> go "src"
+getSources = ("examples/Imperative.hs":)
+         <$> filter (isSuffixOf ".hs")
+         <$> go "src"
   where
     go dir = do
       (dirs, files) <- getFilesAndDirectories dir
