@@ -58,7 +58,7 @@ instance Monad Operand where
 -- 
 -- The sideways trick is to replace the Operand constructor with a (* -> *) type
 -- parameter. Instantiating this with the real Operand will allow Operand to
--- access the same free variables as Prog. But if we instantiating this with
+-- access the same free variables as Prog. But if we instantiate this with
 -- (Scope () Operand) instead, then the operands will have access to one extra
 -- bound variable! This way, we can bind fresh variables which can only be used
 -- inside the operands, and not in Prog.
