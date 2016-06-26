@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
+{-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable, RankNTypes, ScopedTypeVariables #-}
 module Imperative where
 
 -- It's possible to use bound "sideways" in order to support terms which do not
@@ -7,7 +7,10 @@ module Imperative where
 -- are used in positions where it would make no sense to replace them by another
 -- statement.
 
-import Bound
+import Bound.Class
+import Bound.Scope.Simple
+import Bound.Term
+import Bound.Var
 import Control.Applicative
 import Control.Monad (ap)
 import Control.Monad.Trans.Class (lift)
@@ -73,23 +76,38 @@ data Prog operand a
 -- thing. We want to be able to replace those variables with operand values, and
 -- that would not be possible if variables were allowed to appear inside Prog
 -- but outside of an operand.
-pInstantiate1 :: (Applicative operand, Monad operand)
+pInstantiate1 :: forall operand b a. (Applicative operand, Monad operand)
               => operand a
-              -> Prog (Scope () operand) a
+              -> Prog (Scope b operand) a
               -> Prog operand a
-pInstantiate1 x (Ret o)        = Ret (instantiate1 x o)
-pInstantiate1 x (Add o1 o2 cc) = Add (instantiate1 x o1)
-                                     (instantiate1 x o2)
-                                     (pInstantiate1 (lift x) cc)
+pInstantiate1 = go instantiate1
+  where
+    go :: forall f g u
+        . (forall v. operand v -> f v -> g v)
+       -> operand u -> Prog f u -> Prog g u
+    go f x (Ret o)        = Ret (f x o)
+    go f x (Add o1 o2 cc) = Add (f x o1) (f x o2)
+                          $ go f' x cc
+      where
+        f' :: operand v -> Scope () f v -> Scope () g v
+        f' v = Scope . f (fmap F v) . unscope
 
-pAbstract1 :: (Applicative operand, Monad operand, Eq a)
+
+pAbstract1 :: forall operand a. (Applicative operand, Monad operand, Eq a)
            => a
            -> Prog operand a
            -> Prog (Scope () operand) a
-pAbstract1 x (Ret o)        = Ret (abstract1 x o)
-pAbstract1 x (Add o1 o2 cc) = Add (abstract1 x o1)
-                                  (abstract1 x o2)
-                                  (pAbstract1 x cc)
+pAbstract1 = go abstract1
+  where
+    go :: forall f g u. Eq u
+       => (forall v. Eq v => v -> f v -> g v)
+       -> u -> Prog f u -> Prog g u
+    go f x (Ret o)        = Ret (f x o)
+    go f x (Add o1 o2 cc) = Add (f x o1) (f x o2)
+                          $ go f' x cc
+      where
+        f' :: forall v. Eq v => v -> Scope () f v -> Scope () g v
+        f' v = Scope . f (F v) . unscope
 
 evalOperand :: Operand Void -> Int
 evalOperand (Lit i)    = i
