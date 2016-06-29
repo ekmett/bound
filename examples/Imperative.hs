@@ -82,16 +82,15 @@ pInstantiate1 :: forall operand b a. (Applicative operand, Monad operand)
               -> Prog operand a
 pInstantiate1 = go instantiate1
   where
-    go :: forall f g u
-        . (forall v. operand v -> f v -> g v)
-       -> operand u -> Prog f u -> Prog g u
+    go :: forall o o' u
+        . (forall v. operand v -> o v -> o' v)
+       -> operand u -> Prog o u -> Prog o' u
     go f x (Ret o)        = Ret (f x o)
     go f x (Add o1 o2 cc) = Add (f x o1) (f x o2)
                           $ go f' x cc
       where
-        f' :: operand v -> Scope () f v -> Scope () g v
+        f' :: operand v -> Scope () o v -> Scope () o' v
         f' v = Scope . f (fmap F v) . unscope
-
 
 pAbstract1 :: forall operand a. (Applicative operand, Monad operand, Eq a)
            => a
@@ -99,14 +98,14 @@ pAbstract1 :: forall operand a. (Applicative operand, Monad operand, Eq a)
            -> Prog (Scope () operand) a
 pAbstract1 = go abstract1
   where
-    go :: forall f g u. Eq u
-       => (forall v. Eq v => v -> f v -> g v)
-       -> u -> Prog f u -> Prog g u
+    go :: forall o o' u. Eq u
+       => (forall v. Eq v => v -> o v -> o' v)
+       -> u -> Prog o u -> Prog o' u
     go f x (Ret o)        = Ret (f x o)
     go f x (Add o1 o2 cc) = Add (f x o1) (f x o2)
                           $ go f' x cc
       where
-        f' :: forall v. Eq v => v -> Scope () f v -> Scope () g v
+        f' :: forall v. Eq v => v -> Scope () o v -> Scope () o' v
         f' v = Scope . f (F v) . unscope
 
 evalOperand :: Operand Void -> Int
@@ -187,13 +186,27 @@ pInstantiate1' :: ( Applicative operand, Monad operand
                => a
                -> Prog' (Scope () operand) (Scope () identity) a
                -> Prog' operand identity a
-pInstantiate1' x (Ret' o)        = Ret' (instantiate1 (pure x) o)
-pInstantiate1' x (Swp' i1 i2 cc) = Swp' (instantiate1 (pure x) i1)
-                                        (instantiate1 (pure x) i2)
-                                        (pInstantiate1' x cc)
-pInstantiate1' x (Add' o1 o2 cc) = Add' (instantiate1 (pure x) o1)
-                                        (instantiate1 (pure x) o2)
-                                        (pInstantiate1' x cc)
+pInstantiate1' = go (instantiate1 . pure) (instantiate1 . pure)
+  where
+    go :: forall o o' i i' u
+        . (forall v. v -> o v -> o' v)
+       -> (forall v. v -> i v -> i' v)
+       -> u -> Prog' o i u -> Prog' o' i' u
+    go fo fi x = go'
+      where
+        go' (Ret' o)        = Ret' (fo x o)
+        go' (Swp' i1 i2 cc) = Swp' (fi x i1)
+                                   (fi x i2)
+                                   (go' cc)
+        go' (Add' o1 o2 cc) = Add' (fo x o1)
+                                   (fo x o2)
+                                   (go fo' fi' x cc)
+        
+        fo' :: v -> Scope () o v -> Scope () o' v
+        fo' v = Scope . fo (F v) . unscope
+        
+        fi' :: v -> Scope () i v -> Scope () i' v
+        fi' v = Scope . fi (F v) . unscope
 
 pAbstract1' :: ( Applicative operand, Monad operand
                , Applicative identity, Monad identity
@@ -202,13 +215,27 @@ pAbstract1' :: ( Applicative operand, Monad operand
             => a
             -> Prog' operand identity a
             -> Prog' (Scope () operand) (Scope () identity) a
-pAbstract1' x (Ret' o)        = Ret' (abstract1 x o)
-pAbstract1' x (Swp' o1 o2 cc) = Swp' (abstract1 x o1)
-                                     (abstract1 x o2)
-                                     (pAbstract1' x cc)
-pAbstract1' x (Add' o1 o2 cc) = Add' (abstract1 x o1)
-                                     (abstract1 x o2)
-                                     (pAbstract1' x cc)
+pAbstract1' = go abstract1 abstract1
+  where
+    go :: forall o o' i i' u. Eq u
+       => (forall v. Eq v => v -> o v -> o' v)
+       -> (forall v. Eq v => v -> i v -> i' v)
+       -> u -> Prog' o i u -> Prog' o' i' u
+    go fo fi x = go'
+      where
+        go' (Ret' o)        = Ret' (fo x o)
+        go' (Swp' i1 i2 cc) = Swp' (fi x i1)
+                                   (fi x i2)
+                                   (go' cc)
+        go' (Add' o1 o2 cc) = Add' (fo x o1)
+                                   (fo x o2)
+                                   (go fo' fi' x cc)
+        
+        fo' :: Eq v => v -> Scope () o v -> Scope () o' v
+        fo' v = Scope . fo (F v) . unscope
+        
+        fi' :: Eq v => v -> Scope () i v -> Scope () i' v
+        fi' v = Scope . fi (F v) . unscope
 
 evalOperand' :: Operand (IORef Int) -> IO Int
 evalOperand' (Lit i)   = return i
