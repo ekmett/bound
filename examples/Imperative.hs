@@ -82,6 +82,15 @@ pInstantiate1 :: forall operand b a. (Applicative operand, Monad operand)
               -> Prog operand a
 pInstantiate1 = go instantiate1
   where
+    -- A value of type (Prog (Scope b operand) a) contains operands of type
+    -- (Scope b operand a), on which we can call instantiate1:
+    -- 
+    --   instantiate1 :: operand a -> Scope b operand a -> operand a
+    -- 
+    -- In the function below, (Scope b operand) and operand become o and o',
+    -- and instantiate1 is called f:
+    -- 
+    --   f :: operand v -> o v -> o' v
     go :: forall o o' u
         . (forall v. operand v -> o v -> o' v)
        -> operand u -> Prog o u -> Prog o' u
@@ -89,6 +98,20 @@ pInstantiate1 = go instantiate1
     go f x (Add o1 o2 cc) = Add (f x o1) (f x o2)
                           $ go f' x cc
       where
+        -- The rest of the program has access to one extra variable:
+        -- 
+        --   cc :: Prog (Scope () (Scope b operand)) a
+        -- 
+        -- In there, the operands have type (Scope () (Scope b operand) a), and
+        -- this time we cannot call instantiate1 because it would instantiate ()
+        -- instead of instantiating b. Instead, we create a function f' which
+        -- preserves the outer (Scope ()):
+        -- 
+        --   f' :: operand a -> Scope () (Scope b operand) a -> Scope () operand a
+        --   f' :: operand a -> Scope () o                 a -> Scope () o'      a
+        -- 
+        -- In the recursive call to go, (Scope () (Scope b operand)) and
+        -- (Scope () operand) become o and o', and f' is called f.
         f' :: operand v -> Scope () o v -> Scope () o' v
         f' v = Scope . f (fmap F v) . unscope
 
