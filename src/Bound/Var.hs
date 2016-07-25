@@ -234,10 +234,10 @@ instance Read b => Read1 (Var b) where
   liftReadsPrec = liftReadsPrec2 readsPrec readList
 
 #else
-instance Eq2 Var   where eq2 = (==)
-instance Ord2 Var  where compare2   = compare
-instance Show2 Var where showsPrec2 = showsPrec
-instance Read2 Var where readsPrec2 = readsPrec
+--instance Eq2 Var   where eq2 = (==)
+--instance Ord2 Var  where compare2   = compare
+--instance Show2 Var where showsPrec2 = showsPrec
+--instance Read2 Var where readsPrec2 = readsPrec
 
 instance Eq b   => Eq1   (Var b) where eq1 = (==)
 instance Ord b  => Ord1  (Var b) where compare1   = compare

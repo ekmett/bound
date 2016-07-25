@@ -19,7 +19,7 @@ description:
    and we traverse to find free variables, and use the Monad to perform
    substitution that avoids bound variables.
    .
-   Slides describing and motivating this approach to name binding are available 
+   Slides describing and motivating this approach to name binding are available
    online at:
    .
    <http://www.slideshare.net/ekmett/bound-making-de-bruijn-succ-less>
@@ -30,7 +30,7 @@ description:
    With generalized de Bruijn term you can 'lift' whole trees instead of just
    applying 'succ' to individual variables, weakening the all variables bound
    by a scope and greatly speeding up instantiation. By giving binders more
-   structure we permit easy simultaneous substitution and further speed up 
+   structure we permit easy simultaneous substitution and further speed up
    instantiation.
 
 extra-source-files:
@@ -108,18 +108,52 @@ test-suite Simple
     transformers,
     transformers-compat
 
+test-suite Overkill
+  type: exitcode-stdio-1.0
+  main-is: Overkill.hs
+  hs-source-dirs: examples
+  ghc-options: -Wall -threaded -main-is Overkill
+  build-depends:
+    base,
+    bound,
+    transformers,
+    transformers-compat,
+    vector
+  if !impl(ghc >= 7.8)
+    buildable: False
+
+test-suite Deriving
+  type: exitcode-stdio-1.0
+  main-is: Deriving.hs
+  hs-source-dirs: examples
+  ghc-options: -Wall -threaded -main-is Deriving
+  build-depends:
+    base,
+    bound,
+    transformers,
+    transformers-compat
+
+test-suite Imperative
+  type: exitcode-stdio-1.0
+  main-is: Imperative.hs
+  hs-source-dirs: examples
+  ghc-options: -Wall -threaded -main-is Imperative
+  build-depends:
+    base,
+    bound,
+    transformers,
+    transformers-compat,
+    void
 
 test-suite doctests
   type:    exitcode-stdio-1.0
   main-is: doctests.hs
   hs-source-dirs: tests
-  if impl(ghc>=8)
-    buildable: False
-  else
-    ghc-options: -Wall -threaded
-    build-depends:
-      base,
-      directory >= 1.0 && < 1.3,
-      doctest   >= 0.9 && < 0.10,
-      filepath,
-      vector    >= 0.9 && < 0.11
+  ghc-options: -Wall -threaded
+  build-depends:
+    base,
+    directory >= 1.0 && < 1.3,
+    doctest   >= 0.9 && < 0.12,
+    filepath,
+    vector    >= 0.9 && < 0.12,
+    void

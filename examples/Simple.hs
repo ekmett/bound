@@ -9,7 +9,6 @@ import Data.Foldable hiding (notElem)
 import Data.Maybe (fromJust)
 import Data.Traversable
 import Control.Monad
-import Control.Monad.Trans.Class
 import Control.Applicative
 import Prelude hiding (foldr,abs)
 import Data.Functor.Classes
@@ -23,7 +22,22 @@ data Exp a
   | Exp a :@ Exp a
   | Lam (Scope () Exp a)
   | Let [Scope Int Exp a] (Scope Int Exp a)
-  deriving (Eq,Ord,Show,Read)
+  deriving (Eq)
+
+#if MIN_VERSION_transformers(0,5,0) || !MIN_VERSION_transformers(0,4,0)
+instance Eq1 Exp where
+  liftEq g (V a) (V b) = g a b
+  liftEq g (a :@ a') (b :@ b') = liftEq g a b && liftEq g a' b'
+  liftEq g (Lam a) (Lam b) = liftEq g a b
+  liftEq g (Let a a') (Let b b') =
+      liftEq (liftEq g) a b && liftEq g a' b'
+  liftEq _ _ _ = False
+
+#else
+
+-- these 4 classes are needed to help Eq, Ord, Show and Read pass through Scope
+instance Eq1 Exp      where eq1        = (==)
+#endif
 
 -- | A smart constructor for Lam
 --
@@ -184,11 +198,12 @@ prettyWith :: [String] -> Exp String -> String
 prettyWith vs t = prettyPrec (filter (`notElem` toList t) vs) False 0 t ""
 
 pretty :: Exp String -> String
-pretty = prettyWith $ [ [i] | i <- ['a'..'z']] ++ [i : show j | j <- [1..], i <- ['a'..'z'] ]
+pretty = prettyWith $ [ [i] | i <- ['a'..'z']] ++ [i : show j | j <- [1 :: Int ..], i <- ['a'..'z'] ]
 
 pp :: Exp String -> IO ()
 pp = putStrLn . pretty
 
+main :: IO ()
 main = do
   pp cooked
   let result = nf cooked

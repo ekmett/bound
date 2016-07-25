@@ -196,10 +196,10 @@ instance Ord1  (Name b) where compare1 = compare
 instance Show b => Show1 (Name b) where showsPrec1 = showsPrec
 instance Read b => Read1 (Name b) where readsPrec1 = readsPrec
 
-instance Eq2 Name   where eq2 = (==)
-instance Ord2 Name  where compare2   = compare
-instance Show2 Name where showsPrec2 = showsPrec
-instance Read2 Name where readsPrec2  = readsPrec
+--instance Eq2 Name   where eq2 = (==)
+--instance Ord2 Name  where compare2   = compare
+--instance Show2 Name where showsPrec2 = showsPrec
+--instance Read2 Name where readsPrec2  = readsPrec
 
 #endif
 

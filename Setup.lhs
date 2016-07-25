@@ -44,6 +44,10 @@ generateBuildModule verbosity pkg lbi = do
       createDirectoryIfMissingVerbose verbosity True dir
       rewriteFile (dir </> "Build_" ++ testName suite ++ ".hs") $ unlines
         [ "module Build_" ++ testName suite ++ " where"
+        , ""
+        , "autogen_dir :: String"
+        , "autogen_dir = " ++ show dir
+        , ""
         , "deps :: [String]"
         , "deps = " ++ (show $ formatdeps (testDeps libcfg suitecfg))
         ]

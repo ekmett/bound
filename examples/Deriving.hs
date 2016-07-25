@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
+{-# LANGUAGE CPP, DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
 module Deriving where
 
 import Data.List
@@ -6,7 +6,7 @@ import Data.Foldable
 import Data.Traversable
 import Control.Monad
 import Control.Applicative
-import Prelude.Extras
+import Data.Functor.Classes
 import Bound
 
 infixl 9 :@
@@ -17,7 +17,7 @@ data Exp a
   | Lam {-# UNPACK #-} !Int (Pat Exp a) (Scope Int Exp a)
   | Let {-# UNPACK #-} !Int [Scope Int Exp a] (Scope Int Exp a)
   | Case (Exp a) [Alt Exp a]
-  deriving (Eq,Ord,Show,Read,Functor,Foldable,Traversable)
+  deriving (Eq,Functor,Foldable,Traversable)
 
 instance Applicative Exp where
   pure = V
@@ -31,10 +31,18 @@ instance Monad Exp where
   Let n bs e >>= f = Let n (map (>>>= f) bs) (e >>>= f)
   Case e as  >>= f = Case (e >>= f) (map (>>>= f) as)
 
+#if MIN_VERSION_transformers(0,5,0) || !MIN_VERSION_transformers(0,4,0)
+instance Eq1   Exp where
+  liftEq eq (V a)        (V b)           = eq a b
+  liftEq eq (a :@ a')    (b :@ b')       = liftEq eq a b && liftEq eq a' b'
+  liftEq eq (Lam n p e)  (Lam n' p' e')  = n == n' && liftEq eq p p' && liftEq eq e e'
+  liftEq eq (Let n bs e) (Let n' bs' e') = n == n' && liftEq (liftEq eq) bs bs' && liftEq eq e e'
+  liftEq eq (Case e as)  (Case e' as')   = liftEq eq e e' && liftEq (liftEq eq) as as'
+  liftEq _  _            _               = False
+#else
 instance Eq1   Exp
-instance Ord1  Exp
-instance Show1 Exp
-instance Read1 Exp
+#endif
+-- And "similarly" for Ord1, Show1 and Read1
 
 data Pat f a
   = VarP
@@ -44,6 +52,16 @@ data Pat f a
   | ViewP (Scope Int f a) (Pat f a)
   deriving (Eq,Ord,Show,Read,Functor,Foldable,Traversable)
 
+#if MIN_VERSION_transformers(0,5,0) || !MIN_VERSION_transformers(0,4,0)
+instance (Eq1 f, Monad f) => Eq1 (Pat f) where
+  liftEq _  VarP        VarP          = True
+  liftEq _  WildP       WildP         = True
+  liftEq eq (AsP p)     (AsP p')      = liftEq eq p p'
+  liftEq eq (ConP g ps) (ConP g' ps') = g == g' && liftEq (liftEq eq) ps ps'
+  liftEq eq (ViewP e p) (ViewP e' p') = liftEq eq e e' && liftEq eq p p'
+  liftEq _ _ _ = False
+#endif
+
 instance Bound Pat where
   VarP      >>>= _ = VarP
   WildP     >>>= _ = WildP
@@ -52,7 +70,13 @@ instance Bound Pat where
   ViewP e p >>>= f = ViewP (e >>>= f) (p >>>= f)
 
 data Alt f a = Alt {-# UNPACK #-} !Int (Pat f a) (Scope Int f a)
-  deriving (Eq,Ord,Show,Read,Functor,Foldable,Traversable)
+  deriving (Eq,Functor,Foldable,Traversable)
+
+#if MIN_VERSION_transformers(0,5,0) || !MIN_VERSION_transformers(0,4,0)
+instance (Eq1 f, Monad f) => Eq1 (Alt f) where
+  liftEq eq (Alt n p b) (Alt n' p' b') =
+    n == n' && liftEq eq p p' && liftEq eq b b'
+#endif
 
 instance Bound Alt where
   Alt n p b >>>= f = Alt n (p >>>= f) (b >>>= f)

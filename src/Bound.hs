@@ -22,7 +22,7 @@
 -- import Bound
 -- import Control.Applicative
 -- import Control.Monad ('Control.Monad.ap')
--- import Prelude.Extras
+-- import Data.Functor.Classes
 -- import Data.Foldable
 -- import Data.Traversable
 -- @
@@ -34,10 +34,14 @@
 -- @
 --
 -- @
--- instance 'Prelude.Extras.Eq1' Exp
--- instance 'Prelude.Extras.Ord1' Exp
--- instance 'Prelude.Extras.Show1' Exp
--- instance 'Prelude.Extras.Read1' Exp
+-- instance 'Data.Functor.Classes.Eq1' Exp where
+--   'Data.Functor.Classes.Data.Functor.Classes.liftEq' g (V a)     (V b)     = g a b
+--   'Data.Functor.Classes.Data.Functor.Classes.liftEq' g (a :\@ a') (b :\@ b') = 'Data.Functor.Classes.liftEq' g a b && 'Data.Functor.Classes.liftEq' g a' b'
+--   'Data.Functor.Classes.Data.Functor.Classes.liftEq' g (Lam a)   (Lam b)   = 'Data.Functor.Classes.liftEq' g a b
+--   'Data.Functor.Classes.Data.Functor.Classes.liftEq' _ _         _         = False
+-- instance 'Data.Functor.Classes.Ord1' Exp where {- omitted for brevety -}
+-- instance 'Data.Functor.Classes.Show1' Exp where {- omitted for brevety -}
+-- instance 'Data.Functor.Classes.Read1' Exp where {- omitted for brevety -}
 -- instance 'Control.Applicative.Applicative' Exp where 'Control.Applicative.pure' = V; ('<*>') = 'Control.Monad.ap'
 -- @
 --
@@ -45,7 +49,7 @@
 -- instance 'Monad' Exp where
 --   'return' = V
 --   V a      '>>=' f = f a
---   (x :\@ y) '>>=' f = (x '>>=' f) :\@ (y >>= f)
+--   (x :\@ y) '>>=' f = (x '>>=' f) :\@ (y '>>=' f)
 --   Lam e    '>>=' f = Lam (e '>>>=' f)
 -- @
 --
@@ -80,7 +84,7 @@
 -- recursion pattern in their generalized de Bruijn representation. It is named
 -- 'Scope' to match up with the terminology and usage pattern from Conor McBride
 -- and James McKinna's \"I am not a number: I am a free variable\", available
--- from <http://www.cs.st-andrews.ac.uk/~james/RESEARCH/notanum.pdf>, but since
+-- from <http://www.cs.ru.nl/~james/RESEARCH/haskell2004.pdf>, but since
 -- the set of variables is visible in the type, we can provide stronger type
 -- safety guarantees.
 --
