@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
+{-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable, RankNTypes, ScopedTypeVariables #-}
 module Imperative where
 
 -- It's possible to use bound "sideways" in order to support terms which do not
@@ -7,7 +7,10 @@ module Imperative where
 -- are used in positions where it would make no sense to replace them by another
 -- statement.
 
-import Bound
+import Bound.Class
+import Bound.Scope.Simple
+import Bound.Term
+import Bound.Var
 import Control.Applicative
 import Control.Monad (ap)
 import Control.Monad.Trans.Class (lift)
@@ -58,7 +61,7 @@ instance Monad Operand where
 -- 
 -- The sideways trick is to replace the Operand constructor with a (* -> *) type
 -- parameter. Instantiating this with the real Operand will allow Operand to
--- access the same free variables as Prog. But if we instantiating this with
+-- access the same free variables as Prog. But if we instantiate this with
 -- (Scope () Operand) instead, then the operands will have access to one extra
 -- bound variable! This way, we can bind fresh variables which can only be used
 -- inside the operands, and not in Prog.
@@ -73,23 +76,60 @@ data Prog operand a
 -- thing. We want to be able to replace those variables with operand values, and
 -- that would not be possible if variables were allowed to appear inside Prog
 -- but outside of an operand.
-pInstantiate1 :: (Applicative operand, Monad operand)
+pInstantiate1 :: forall operand b a. (Applicative operand, Monad operand)
               => operand a
-              -> Prog (Scope () operand) a
+              -> Prog (Scope b operand) a
               -> Prog operand a
-pInstantiate1 x (Ret o)        = Ret (instantiate1 x o)
-pInstantiate1 x (Add o1 o2 cc) = Add (instantiate1 x o1)
-                                     (instantiate1 x o2)
-                                     (pInstantiate1 (lift x) cc)
+pInstantiate1 = go instantiate1
+  where
+    -- A value of type (Prog (Scope b operand) a) contains operands of type
+    -- (Scope b operand a), on which we can call instantiate1:
+    -- 
+    --   instantiate1 :: operand a -> Scope b operand a -> operand a
+    -- 
+    -- In the function below, (Scope b operand) and operand become o and o',
+    -- and instantiate1 is called f:
+    -- 
+    --   f :: operand v -> o v -> o' v
+    go :: forall o o' u
+        . (forall v. operand v -> o v -> o' v)
+       -> operand u -> Prog o u -> Prog o' u
+    go f x (Ret o)        = Ret (f x o)
+    go f x (Add o1 o2 cc) = Add (f x o1) (f x o2)
+                          $ go f' x cc
+      where
+        -- The rest of the program has access to one extra variable:
+        -- 
+        --   cc :: Prog (Scope () (Scope b operand)) a
+        -- 
+        -- In there, the operands have type (Scope () (Scope b operand) a), and
+        -- this time we cannot call instantiate1 because it would instantiate ()
+        -- instead of instantiating b. Instead, we create a function f' which
+        -- preserves the outer (Scope ()):
+        -- 
+        --   f' :: operand a -> Scope () (Scope b operand) a -> Scope () operand a
+        --   f' :: operand a -> Scope () o                 a -> Scope () o'      a
+        -- 
+        -- In the recursive call to go, (Scope () (Scope b operand)) and
+        -- (Scope () operand) become o and o', and f' is called f.
+        f' :: operand v -> Scope () o v -> Scope () o' v
+        f' v = Scope . f (fmap F v) . unscope
 
-pAbstract1 :: (Applicative operand, Monad operand, Eq a)
+pAbstract1 :: forall operand a. (Applicative operand, Monad operand, Eq a)
            => a
            -> Prog operand a
            -> Prog (Scope () operand) a
-pAbstract1 x (Ret o)        = Ret (abstract1 x o)
-pAbstract1 x (Add o1 o2 cc) = Add (abstract1 x o1)
-                                  (abstract1 x o2)
-                                  (pAbstract1 x cc)
+pAbstract1 = go abstract1
+  where
+    go :: forall o o' u. Eq u
+       => (forall v. Eq v => v -> o v -> o' v)
+       -> u -> Prog o u -> Prog o' u
+    go f x (Ret o)        = Ret (f x o)
+    go f x (Add o1 o2 cc) = Add (f x o1) (f x o2)
+                          $ go f' x cc
+      where
+        f' :: forall v. Eq v => v -> Scope () o v -> Scope () o' v
+        f' v = Scope . f (F v) . unscope
 
 evalOperand :: Operand Void -> Int
 evalOperand (Lit i)    = i
@@ -169,13 +209,27 @@ pInstantiate1' :: ( Applicative operand, Monad operand
                => a
                -> Prog' (Scope () operand) (Scope () identity) a
                -> Prog' operand identity a
-pInstantiate1' x (Ret' o)        = Ret' (instantiate1 (pure x) o)
-pInstantiate1' x (Swp' i1 i2 cc) = Swp' (instantiate1 (pure x) i1)
-                                        (instantiate1 (pure x) i2)
-                                        (pInstantiate1' x cc)
-pInstantiate1' x (Add' o1 o2 cc) = Add' (instantiate1 (pure x) o1)
-                                        (instantiate1 (pure x) o2)
-                                        (pInstantiate1' x cc)
+pInstantiate1' = go (instantiate1 . pure) (instantiate1 . pure)
+  where
+    go :: forall o o' i i' u
+        . (forall v. v -> o v -> o' v)
+       -> (forall v. v -> i v -> i' v)
+       -> u -> Prog' o i u -> Prog' o' i' u
+    go fo fi x = go'
+      where
+        go' (Ret' o)        = Ret' (fo x o)
+        go' (Swp' i1 i2 cc) = Swp' (fi x i1)
+                                   (fi x i2)
+                                   (go' cc)
+        go' (Add' o1 o2 cc) = Add' (fo x o1)
+                                   (fo x o2)
+                                   (go fo' fi' x cc)
+        
+        fo' :: v -> Scope () o v -> Scope () o' v
+        fo' v = Scope . fo (F v) . unscope
+        
+        fi' :: v -> Scope () i v -> Scope () i' v
+        fi' v = Scope . fi (F v) . unscope
 
 pAbstract1' :: ( Applicative operand, Monad operand
                , Applicative identity, Monad identity
@@ -184,13 +238,27 @@ pAbstract1' :: ( Applicative operand, Monad operand
             => a
             -> Prog' operand identity a
             -> Prog' (Scope () operand) (Scope () identity) a
-pAbstract1' x (Ret' o)        = Ret' (abstract1 x o)
-pAbstract1' x (Swp' o1 o2 cc) = Swp' (abstract1 x o1)
-                                     (abstract1 x o2)
-                                     (pAbstract1' x cc)
-pAbstract1' x (Add' o1 o2 cc) = Add' (abstract1 x o1)
-                                     (abstract1 x o2)
-                                     (pAbstract1' x cc)
+pAbstract1' = go abstract1 abstract1
+  where
+    go :: forall o o' i i' u. Eq u
+       => (forall v. Eq v => v -> o v -> o' v)
+       -> (forall v. Eq v => v -> i v -> i' v)
+       -> u -> Prog' o i u -> Prog' o' i' u
+    go fo fi x = go'
+      where
+        go' (Ret' o)        = Ret' (fo x o)
+        go' (Swp' i1 i2 cc) = Swp' (fi x i1)
+                                   (fi x i2)
+                                   (go' cc)
+        go' (Add' o1 o2 cc) = Add' (fo x o1)
+                                   (fo x o2)
+                                   (go fo' fi' x cc)
+        
+        fo' :: Eq v => v -> Scope () o v -> Scope () o' v
+        fo' v = Scope . fo (F v) . unscope
+        
+        fi' :: Eq v => v -> Scope () i v -> Scope () i' v
+        fi' v = Scope . fi (F v) . unscope
 
 evalOperand' :: Operand (IORef Int) -> IO Int
 evalOperand' (Lit i)   = return i
