@@ -392,7 +392,7 @@ mapMScope_ :: (Monad m, Foldable f) =>
 mapMScope_ f g (Scope s) = mapM_ (bimapM_ f (mapM_ g)) s
 {-# INLINE mapMScope_ #-}
 
--- | Traverse both bound and free variables
+-- | 'traverse' the bound variables in a 'Scope'.
 traverseBound :: (Applicative g, Traversable f) =>
                  (b -> g c) -> Scope b f a -> g (Scope c f a)
 traverseBound f (Scope s) = Scope <$> traverse f' s where
