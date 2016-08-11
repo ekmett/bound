@@ -1,6 +1,5 @@
 #!/usr/bin/runhaskell
 \begin{code}
-{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
 {-# OPTIONS_GHC -Wall #-}
 module Main (main) where
 
@@ -23,25 +22,12 @@ main = defaultMainWithHooks simpleUserHooks
      buildHook simpleUserHooks pkg lbi hooks flags
   }
 
--- Work around the fact that @autogenModulesDir@ in newer cabal versions now needs the @ComponentLocalBuildInfo@
---
--- Ideally, we'd use CPP to detect this sort of thing, but there is this issue:
--- https://github.com/haskell/cabal/issues/3424
-class ConstOrId a b where
-    constOrId :: a -> b
-
-instance ConstOrId a a where
-    constOrId = id
-
-instance ConstOrId a (b -> a) where
-    constOrId = const
-
 generateBuildModule :: Verbosity -> PackageDescription -> LocalBuildInfo -> IO ()
 generateBuildModule verbosity pkg lbi = do
+  let dir = autogenModulesDir lbi
+  createDirectoryIfMissingVerbose verbosity True dir
   withLibLBI pkg lbi $ \_ libcfg -> do
     withTestLBI pkg lbi $ \suite suitecfg -> do
-      let dir = constOrId (autogenModulesDir lbi) libcfg
-      createDirectoryIfMissingVerbose verbosity True dir
       rewriteFile (dir </> "Build_" ++ testName suite ++ ".hs") $ unlines
         [ "module Build_" ++ testName suite ++ " where"
         , ""
