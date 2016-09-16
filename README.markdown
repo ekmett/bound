@@ -16,12 +16,16 @@ See [the documentation](http://hackage.haskell.org/package/bound) on hackage for
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE TemplateHaskell #-}
+
 import Bound
 import Control.Applicative
 import Control.Monad
 import Data.Functor.Classes
 import Data.Foldable
 import Data.Traversable
+import Data.Eq.Deriving (deriveEq1)      -- these two are from the
+import Text.Show.Deriving (deriveShow1)  -- deriving-compat package
 
 infixl 9 :@
 data Exp a = V a | Exp a :@ Exp a | Lam (Scope () Exp a)
@@ -44,30 +48,8 @@ whnf (f :@ a) = case whnf f of
   f'    -> f' :@ a
 whnf e = e
 
--- Unfortunately we have to write these instances by hand, for now.
---
--- https://mail.haskell.org/pipermail/libraries/2016-January/026536.html
--- https://github.com/haskell-compat/deriving-compat/issues/3
-instance Eq1 Exp where
-  liftEq g (V a)     (V b)     = g a b
-  liftEq g (a :@ a') (b :@ b') = liftEq g a b && liftEq g a' b'
-  liftEq g (Lam a)   (Lam b)   = liftEq g a b
-  liftEq _ _         _         = False
-
-instance Show1 Exp where
-  liftShowsPrec g _ d (V a) =
-    showParen (d >= 11)
-      $ showString "V "
-      . g 11 a
-  liftShowsPrec g h d (a :@ b) =
-    showParen (d >= 10)
-      $ liftShowsPrec g h 10 a
-      . showString " :@ "
-      . liftShowsPrec g h 10 b
-  liftShowsPrec g h d (Lam a) =
-    showParen (d >= 11)
-      $ showString "Lam "
-      . liftShowsPrec g h 11 a
+deriveEq1 ''Exp
+deriveShow1 ''Exp
 
 main :: IO ()
 main = do
