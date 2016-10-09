@@ -47,6 +47,7 @@ import Bound.Var
 import Control.Applicative
 #endif
 import Control.Comonad
+import Control.DeepSeq
 import Control.Monad (liftM, liftM2)
 #if __GLASGOW_HASKELL__ < 710
 import Data.Foldable
@@ -229,6 +230,10 @@ instance (Binary b, Binary a) => Binary (Name b a) where
 instance (Serialize b, Serialize a) => Serialize (Name b a) where
   put = serializeWith2 Serialize.put Serialize.put
   get = deserializeWith2 Serialize.get Serialize.get
+
+# if __GLASGOW_HASKELL__ >= 704
+instance (NFData b, NFData a) => NFData (Name b a)
+# endif
 
 -------------------------------------------------------------------------------
 -- Abstraction

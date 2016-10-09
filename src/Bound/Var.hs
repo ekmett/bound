@@ -249,3 +249,7 @@ instance Ord b  => Ord1  (Var b) where compare1   = compare
 instance Show b => Show1 (Var b) where showsPrec1 = showsPrec
 instance Read b => Read1 (Var b) where readsPrec1 = readsPrec
 #endif
+
+# if __GLASGOW_HASKELL__ >= 704
+instance (NFData a, NFData b) => NFData (Var b a)
+# endif
