@@ -69,6 +69,7 @@ module Bound.Scope
 import Bound.Class
 import Bound.Var
 import Control.Applicative
+import Control.DeepSeq
 import Control.Monad hiding (mapM, mapM_)
 import Control.Monad.Trans.Class
 import Data.Bifunctor
@@ -227,6 +228,9 @@ instance (Hashable b, Monad f, Hashable1 f) => Hashable1 (Scope b f) where
 instance (Hashable b, Monad f, Hashable1 f, Hashable a) => Hashable (Scope b f a) where
   hashWithSalt n m = hashWithSalt1 n (fromScope m)
   {-# INLINE hashWithSalt #-}
+
+instance NFData (f (Var b (f a))) => NFData (Scope b f a) where
+  rnf scope = rnf (unscope scope)
 
 -------------------------------------------------------------------------------
 -- Abstraction
