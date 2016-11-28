@@ -56,6 +56,9 @@ infixl 1 >>>=
 -- This is useful for types like expression lists, case alternatives,
 -- schemas, etc. that may not be expressions in their own right, but often
 -- contain expressions.
+--
+-- /Note:/ 'Control.Monad.Free.Free' isn't "really" a monad transformer, even if
+-- the kind matches. Therefore there isn't @'Bound' 'Control.Monad.Free.Free'@ instance.
 class Bound t where
   -- | Perform substitution
   --
