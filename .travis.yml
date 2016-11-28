@@ -21,26 +21,25 @@ matrix:
 
 before_install:
  - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
- - export CABAL=cabal-$CABALVER
  - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
- - $CABAL --version
+ - cabal --version
  - ghc-pkg list | grep Cabal
 
 install:
- - travis_retry $CABAL update
- # - $CABAL install "Cabal == $CABALVER.*"
- - $CABAL install --enable-tests --only-dependencies
+ - travis_retry cabal update
+ # - cabal install "Cabal == $CABALVER.*"
+ - cabal install --enable-tests --only-dependencies
 
 script:
- - $CABAL configure -v2 --enable-tests
- - $CABAL build
- - $CABAL test
- - $CABAL haddock
- - $CABAL sdist
- - export SRC_TGZ=$($CABAL info . | awk '{print $2 ".tar.gz";exit}') ;
+ - cabal configure -v2 --enable-tests
+ - cabal build
+ - cabal test
+ - cabal haddock
+ - cabal sdist
+ - export SRC_TGZ=$(cabal info . | awk '{print $2 ".tar.gz";exit}') ;
    cd dist/;
    if [ -f "$SRC_TGZ" ]; then
-      $CABAL install "$SRC_TGZ";
+      cabal install "$SRC_TGZ";
    else
       echo "expected '$SRC_TGZ' not found";
       exit 1;
