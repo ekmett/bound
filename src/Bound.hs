@@ -25,28 +25,35 @@
 -- import Data.Functor.Classes
 -- import Data.Foldable
 -- import Data.Traversable
--- import Data.Eq.Deriving (deriveEq1)      -- these two are from the
--- import Text.Show.Deriving (deriveShow1)  -- deriving-compat package
+-- -- This is from deriving-compat package
+-- import Data.Deriving (deriveEq1, deriveOrd1, deriveRead1, deriveShow1) 
 -- @
 --
 -- @
 -- infixl 9 :\@
 -- data Exp a = V a | Exp a :\@ Exp a | Lam ('Scope' () Exp a)
---   deriving ('Eq','Ord','Show','Read','Functor','Data.Foldable.Foldable','Data.Foldable.Traversable')
+--   deriving ('Functor','Data.Foldable.Foldable','Data.Foldable.Traversable')
 -- @
 --
 -- @
--- deriveEq1 ''Exp
--- deriveShow1 ''Exp
 -- instance 'Control.Applicative.Applicative' Exp where 'Control.Applicative.pure' = V; ('<*>') = 'Control.Monad.ap'
--- @
---
--- @
 -- instance 'Monad' Exp where
 --   'return' = V
 --   V a      '>>=' f = f a
 --   (x :\@ y) '>>=' f = (x '>>=' f) :\@ (y '>>=' f)
 --   Lam e    '>>=' f = Lam (e '>>>=' f)
+-- @
+--
+-- @
+-- deriveEq1   ''Exp
+-- deriveOrd1  ''Exp
+-- deriveRead1 ''Exp
+-- deriveShow1 ''Exp
+--
+-- instance 'Eq' a   => 'Eq'   (Exp a) where (==) = eq1
+-- instance 'Ord' a  => 'Ord'  (Exp a) where compare = compare1
+-- instance 'Show' a => 'Show' (Exp a) where showsPrec = showsPrec1
+-- instance 'Read' a => 'Read' (Exp a) where readsPrec = readsPrec1
 -- @
 --
 -- @

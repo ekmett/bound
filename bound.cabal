@@ -99,12 +99,13 @@ test-suite Simple
   type: exitcode-stdio-1.0
   main-is: Simple.hs
   hs-source-dirs: examples
-  buildable: False
+  buildable: True
 
   ghc-options: -Wall -threaded
   build-depends:
     base,
     bound,
+    deriving-compat >=0.3.4 && <0.4,
     transformers,
     transformers-compat
 
