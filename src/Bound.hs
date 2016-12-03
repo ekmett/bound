@@ -18,13 +18,15 @@
 -- An untyped lambda calculus:
 --
 -- @
--- {-\# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable \#-}
+-- {-\# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable, TemplateHaskell \#-}
 -- import Bound
 -- import Control.Applicative
 -- import Control.Monad ('Control.Monad.ap')
 -- import Data.Functor.Classes
 -- import Data.Foldable
 -- import Data.Traversable
+-- import Data.Eq.Deriving (deriveEq1)      -- these two are from the
+-- import Text.Show.Deriving (deriveShow1)  -- deriving-compat package
 -- @
 --
 -- @
@@ -34,14 +36,8 @@
 -- @
 --
 -- @
--- instance 'Data.Functor.Classes.Eq1' Exp where
---   'Data.Functor.Classes.Data.Functor.Classes.liftEq' g (V a)     (V b)     = g a b
---   'Data.Functor.Classes.Data.Functor.Classes.liftEq' g (a :\@ a') (b :\@ b') = 'Data.Functor.Classes.liftEq' g a b && 'Data.Functor.Classes.liftEq' g a' b'
---   'Data.Functor.Classes.Data.Functor.Classes.liftEq' g (Lam a)   (Lam b)   = 'Data.Functor.Classes.liftEq' g a b
---   'Data.Functor.Classes.Data.Functor.Classes.liftEq' _ _         _         = False
--- instance 'Data.Functor.Classes.Ord1' Exp where {- omitted for brevety -}
--- instance 'Data.Functor.Classes.Show1' Exp where {- omitted for brevety -}
--- instance 'Data.Functor.Classes.Read1' Exp where {- omitted for brevety -}
+-- deriveEq1 ''Exp
+-- deriveShow1 ''Exp
 -- instance 'Control.Applicative.Applicative' Exp where 'Control.Applicative.pure' = V; ('<*>') = 'Control.Monad.ap'
 -- @
 --
