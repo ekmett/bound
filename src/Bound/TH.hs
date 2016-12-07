@@ -36,103 +36,83 @@ import Control.Applicative (Applicative, pure, (<*>))
 -- Use to automatically derive 'Applicative' and 'Monad' instances for
 -- your datatype.
 --
--- In GHC 7.10 or later the @DeriveAnyClass@ extension may be used to derive the 'Show1' and 'Read1' instances
+-- Does not work yet for components that are lists or instances of
+-- 'Functor' or with a great deal other things.
+--
+-- @deriving-compat@ package may be used to derive the 'Show1' and 'Read1' instances
 --
 -- @
--- {-# LANGUAGE DeriveAnyClass  #-}
--- {-# LANGUAGE DeriveFunctor   #-}
--- {-# LANGUAGE TemplateHaskell #-}
+-- {-\# LANGUAGE DeriveFunctor      #-}
+-- {-\# LANGUAGE TemplateHaskell    #-}
 --
--- import Bound          (Scope, makeBound)
--- import Prelude.Extras (Read1, Show1)
+-- import Bound                (Scope, makeBound)
+-- import Data.Functor.Classes (Show1, Read1, shosPrec1, readsPrec1)
+-- import Data.Deriving        (deriveShow1, deriveRead1)
 --
 -- data Exp a
 --   = V a
 --   | App (Exp a) (Exp a)
 --   | Lam (Scope () Exp a)
 --   | I Int
---   deriving (Functor, Read, Read1, Show, Show1)
+--   deriving (Functor)
 --
 -- makeBound ''Exp
+-- deriveShow1 ''Exp
+-- deriveRead1 ''Exp
+-- instance Read a => Read (Exp a) where readsPrec = readsPrec1
+-- instance Show a => Show (Exp a) where showsPrec = showsPrec1
 -- @
 --
 -- and in GHCi
 --
 -- @
--- ghci> :set -XDeriveAnyClass
 -- ghci> :set -XDeriveFunctor
 -- ghci> :set -XTemplateHaskell
--- ghci> import Bound          (Scope, makeBound)
--- ghci> import Prelude.Extras (Read1, Show1)
--- ghci> data Exp a = V a | App (Exp a) (Exp a) | Lam (Scope () Exp a) | I Int deriving (Functor, Read, Read1, Show, Show1); makeBound ''Exp
--- @
---
--- or
---
--- @
+-- ghci> import Bound                (Scope, makeBound)
+-- ghci> import Data.Functor.Classes (Show1, Read1, showsPrec1, readsPrec1)
+-- ghci> import Data.Deriving        (deriveShow1, deriveRead1)
 -- ghci> :{
--- ghci| data Exp a = V a | App (Exp a) (Exp a) | Lam (Scope () Exp a) | I Int deriving (Functor, Read, Read1, Show, Show1)
+-- ghci| data Exp a = V a | App (Exp a) (Exp a) | Lam (Scope () Exp a) | I Int deriving (Functor)
 -- ghci| makeBound ''Exp
+-- ghci| deriveShow1 ''Exp
+-- ghci| deriveRead1 ''Exp
+-- ghci| instance Read a => Read (Exp a) where readsPrec = readsPrec1
+-- ghci| instance Show a => Show (Exp a) where showsPrec = showsPrec1
 -- ghci| :}
 -- @
 --
--- If @DeriveAnyClass@ is not used the instances must be declared explicitly:
+-- 'Eq' and 'Ord' instances can be derived similarly
 --
 -- @
--- data Exp a
---   = V a
---   | App (Exp a) (Exp a)
---   | Lam (Scope () Exp a)
---   | I Int
---   deriving (Functor, Read, Show)
--- instance Read1 Exp
--- instance Show1 Exp
+-- import Data.Functor.Classes (Eq1, Ord1, eq1, compare1)
+-- import Data.Deriving        (deriveEq1, deriveOrd1)
 --
--- makeBound ''Exp
+-- deriveEq1 ''Exp
+-- deriveOrd1 ''Exp
+-- instance Eq a => Eq (Exp a) where (==) = eq1
+-- instance Ord a => Ord (Exp a) where compare = compare1
 -- @
 --
 -- or in GHCi:
 --
 -- @
+-- ghci> import Data.Functor.Classes (Eq1, Ord1, eq1, compare1)
+-- ghci> import Data.Deriving        (deriveEq1, deriveOrd1)
 -- ghci> :{
--- ghci| data Exp a = V a | App (Exp a) (Exp a) | Lam (Scope () Exp a) | I Int deriving (Functor, Read, Show)
--- ghci| instance Read1 Exp
--- ghci| instance Show1 Exp
--- ghci| makeBound ''Exp
+-- ghci| deriveEq1 ''Exp
+-- ghci| deriveOrd1 ''Exp
+-- ghci| instance Eq a => Eq (Exp a) where (==) = eq1
+-- ghci| instance Ord a => Ord (Exp a) where compare = compare1
 -- ghci| :}
 -- @
 --
--- 'Eq' and 'Ord' instances need to be derived differently if the data
--- type's immediate components include 'Scope' (or other instances of
--- 'Bound')
---
--- In a file with @{-# LANGUAGE StandaloneDeriving #-}@ at the top:
+-- We cannot automatically derive 'Eq' and 'Ord' using the standard GHC mechanism,
+-- because instances require @Exp@ to be a 'Monad':
 --
 -- @
--- instance Eq1 Exp
--- deriving instance Eq a => Eq (Exp a)
---
--- instance Ord1 Exp
--- deriving instance Ord a => Ord (Exp a)
+-- instance (Monad f, Eq b, Eq1 f, Eq a)    => Eq (Scope b f a)
+-- instance (Monad f, Ord b, Ord1 f, Ord a) => Ord (Scope b f a)
 -- @
---
--- or in GHCi:
---
--- @
--- ghci> :set -XStandaloneDeriving
--- ghci> deriving instance Eq a => Eq (Exp a); instance Eq1 Exp
--- ghci> deriving instance Ord a => Ord (Exp a); instance Ord1 Exp
--- @
---
--- because their 'Eq' and 'Ord' instances require @Exp@ to be a 'Monad':
---
--- @
---   instance (Monad f, Eq b, Eq1 f, Eq a)    => Eq (Scope b f a)
---   instance (Monad f, Ord b, Ord1 f, Ord a) => Ord (Scope b f a)
--- @
---
--- Does not work yet for components that are lists or instances of
--- 'Functor' or with a great deal other things.
 
 makeBound :: Name -> DecsQ
 makeBound name = do
