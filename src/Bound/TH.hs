@@ -23,14 +23,17 @@ module Bound.TH
   ) where
 
 #ifdef MIN_VERSION_template_haskell
-import Data.List        (intercalate)
+import Data.List        (intercalate, foldr1)
 import Data.Traversable (for)
-import Control.Monad    (foldM)
+import Control.Monad    (foldM, mzero, guard)
 import Bound.Class      (Bound((>>>=)))
 import Language.Haskell.TH
 #if __GLASGOW_HASKELL__ < 710
 import Control.Applicative (Applicative, pure, (<*>))
 #endif
+
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.Maybe (MaybeT (..))
 
 -- |
 -- Use to automatically derive 'Applicative' and 'Monad' instances for
@@ -203,7 +206,7 @@ makeBound name = do
 data Prop
   = Bound
   | Konst
-  | Funktor
+  | Funktor Int -- ^ number tells how many layers are there
   | Exp
   deriving Show
 
@@ -252,14 +255,14 @@ construct (DataD _ name tyvar constructors _) = do
     functorApp <- isFunctorApp ty
     var <- newName "var"
     pure $ case () of
-      _ | ty == expa    -> (var, Exp)
-        | boundInstance -> (var, Bound)
-        | ConT{} <- ty  -> (var, Konst)
-        | functorApp    -> (var, Funktor)
-        | otherwise     -> error $ "This is bad: "
-                                 ++ show ty
-                                 ++ " "
-                                 ++ show boundInstance
+      _ | ty == expa           -> (var, Exp)
+        | boundInstance        -> (var, Bound)
+        | ConT{} <- ty         -> (var, Konst)
+        | Just n <- functorApp -> (var, Funktor n)
+        | otherwise            -> error $ "This is bad: "
+                                        ++ show ty
+                                        ++ " "
+                                        ++ show boundInstance
 
   -- Checks whether a type is an instance of Bound by stripping its last
   -- two type arguments:
@@ -271,9 +274,16 @@ construct (DataD _ name tyvar constructors _) = do
     | Just a <- stripLast2 ty = isInstance ''Bound [a]
     | otherwise               = return False
 
-  isFunctorApp :: Type -> Q Bool
-  isFunctorApp (f `AppT` x) | x == expa = isInstance ''Functor [f]
-  isFunctorApp _                        = return False
+  isFunctorApp :: Type -> Q (Maybe Int)
+  isFunctorApp = runMaybeT . go
+    where
+      go x | x == expa  = pure 0
+      go (f `AppT` x)   = do
+          isFunctor <- lift $ isInstance ''Functor [f]
+          guard isFunctor
+          n <- go x
+          pure $ n + 1
+      go _              = mzero
 
 construct _ = error "Must be a data type."
 
@@ -308,8 +318,11 @@ interpret bnds = do
         pure expr `appE` varE name
       Exp   ->
         pure expr `appE` (varE '(>>=) `appE` varE name `appE` varE f)
-      Funktor ->
-        pure expr `appE` (varE 'fmap `appE` (varE '(>>=) `sectionR` varE f) `appE` varE name)
+      Funktor n ->
+        pure expr `appE` (pure (fmapN n) `appE` (varE '(>>=) `sectionR` varE f) `appE` varE name)
+
+    fmapN :: Int -> Exp
+    fmapN n = foldr1 (\a b -> VarE '(.) `AppE` a `AppE` b) $ replicate n (VarE 'fmap)
 
   matches <- for bnds bind
   pure $ LamE [VarP x, VarP f] (CaseE (VarE x) matches)
