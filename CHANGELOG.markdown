@@ -3,6 +3,7 @@
 
 * GHC 8 support
 * Converted from `prelude-extras` to `transformers` + `transformers-compat` for the `Eq1`, `Ord1`, `Show1`, and `Read1` functionality.
+* `makeBound` supports `Functor` components
 
 1.0.7
 ------

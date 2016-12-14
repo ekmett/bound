@@ -36,8 +36,8 @@ import Control.Applicative (Applicative, pure, (<*>))
 -- Use to automatically derive 'Applicative' and 'Monad' instances for
 -- your datatype.
 --
--- Does not work yet for components that are lists or instances of
--- 'Functor' or with a great deal other things.
+-- Also works for components that are lists or instances of 'Functor',
+-- but still does not work for a great deal of other things.
 --
 -- @deriving-compat@ package may be used to derive the 'Show1' and 'Read1' instances
 --
@@ -53,6 +53,7 @@ import Control.Applicative (Applicative, pure, (<*>))
 --   = V a
 --   | App (Exp a) (Exp a)
 --   | Lam (Scope () Exp a)
+--   | ND [Exp a]
 --   | I Int
 --   deriving (Functor)
 --
@@ -72,7 +73,7 @@ import Control.Applicative (Applicative, pure, (<*>))
 -- ghci> import Data.Functor.Classes (Show1, Read1, showsPrec1, readsPrec1)
 -- ghci> import Data.Deriving        (deriveShow1, deriveRead1)
 -- ghci> :{
--- ghci| data Exp a = V a | App (Exp a) (Exp a) | Lam (Scope () Exp a) | I Int deriving (Functor)
+-- ghci| data Exp a = V a | App (Exp a) (Exp a) | Lam (Scope () Exp a) | ND [Exp a] | I Int deriving (Functor)
 -- ghci| makeBound ''Exp
 -- ghci| deriveShow1 ''Exp
 -- ghci| deriveRead1 ''Exp
@@ -202,6 +203,7 @@ makeBound name = do
 data Prop
   = Bound
   | Konst
+  | Funktor
   | Exp
   deriving Show
 
@@ -247,16 +249,17 @@ construct (DataD _ name tyvar constructors _) = do
   typeToBnd :: Type -> Q (Name, Prop)
   typeToBnd ty = do
     boundInstance <- isBound ty
+    functorApp <- isFunctorApp ty
     var <- newName "var"
-    pure $
-      case () of ()
-                   | ty == expa    -> (var, Exp)
-                   | boundInstance -> (var, Bound)
-                   | ConT{} <- ty  -> (var, Konst)
-                   | otherwise     -> error $ "This is bad: "
-                                           ++ show ty
-                                           ++ " "
-                                           ++ show boundInstance
+    pure $ case () of
+      _ | ty == expa    -> (var, Exp)
+        | boundInstance -> (var, Bound)
+        | ConT{} <- ty  -> (var, Konst)
+        | functorApp    -> (var, Funktor)
+        | otherwise     -> error $ "This is bad: "
+                                 ++ show ty
+                                 ++ " "
+                                 ++ show boundInstance
 
   -- Checks whether a type is an instance of Bound by stripping its last
   -- two type arguments:
@@ -267,6 +270,11 @@ construct (DataD _ name tyvar constructors _) = do
   isBound ty
     | Just a <- stripLast2 ty = isInstance ''Bound [a]
     | otherwise               = return False
+
+  isFunctorApp :: Type -> Q Bool
+  isFunctorApp (f `AppT` x) | x == expa = isInstance ''Functor [f]
+  isFunctorApp _                        = return False
+
 construct _ = error "Must be a data type."
 
 interpret :: [Components] -> ExpQ
@@ -300,6 +308,8 @@ interpret bnds = do
         pure expr `appE` varE name
       Exp   ->
         pure expr `appE` (varE '(>>=) `appE` varE name `appE` varE f)
+      Funktor ->
+        pure expr `appE` (varE 'fmap `appE` (varE '(>>=) `sectionR` varE f) `appE` varE name)
 
   matches <- for bnds bind
   pure $ LamE [VarP x, VarP f] (CaseE (VarE x) matches)
