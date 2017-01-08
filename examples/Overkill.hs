@@ -27,12 +27,14 @@ import Bound
 infixl 9 :@
 infixr 5 :>
 
+#if !MIN_VERSION_vector(0,12,0)
 -- little orphan instances
 instance Show1 Vector where
     liftShowsPrec _ sl _ v = sl (Vector.toList v)
 
 instance Eq1 Vector where
     liftEq eq v u = Vector.and (Vector.zipWith eq v u)
+#endif
 
 data Exp a
   = Var a
