@@ -38,8 +38,8 @@ import Data.Foldable
 import Data.Traversable
 import Data.Monoid (Monoid(..))
 #endif
-import Data.Hashable
-import Data.Hashable.Extras
+import Data.Hashable (Hashable(..))
+import Data.Hashable.Lifted (Hashable1(..), Hashable2(..))
 import Data.Bifunctor
 import Data.Bifoldable
 import qualified Data.Binary as Binary
@@ -92,8 +92,13 @@ data Var b a
 distinguisher :: Int
 distinguisher = fromIntegral $ (maxBound :: Word) `quot` 3
 
-instance Hashable2 Var
-instance Hashable b => Hashable1 (Var b)
+instance Hashable2 Var where
+  liftHashWithSalt2 h _ s (B b) = h s b
+  liftHashWithSalt2 _ h s (F a) = h s a `hashWithSalt` distinguisher
+  {-# INLINE liftHashWithSalt2 #-}
+instance Hashable b => Hashable1 (Var b) where
+  liftHashWithSalt = liftHashWithSalt2 hashWithSalt
+  {-# INLINE liftHashWithSalt #-}
 instance (Hashable b, Hashable a) => Hashable (Var b a) where
   hashWithSalt s (B b) = hashWithSalt s b
   hashWithSalt s (F a) = hashWithSalt s a `hashWithSalt` distinguisher

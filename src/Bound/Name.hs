@@ -66,8 +66,8 @@ import Data.Data
 import GHC.Generics
 # endif
 #endif
-import Data.Hashable
-import Data.Hashable.Extras
+import Data.Hashable (Hashable(..))
+import Data.Hashable.Lifted (Hashable1(..), Hashable2(..))
 import Data.Profunctor
 import qualified Data.Serialize as Serialize
 import Data.Serialize (Serialize)
@@ -118,12 +118,12 @@ instance Eq b => Eq (Name n b) where
   {-# INLINE (==) #-}
 
 instance Hashable2 Name where
-  hashWithSalt2 m (Name _ a) = hashWithSalt m a
-  {-# INLINE hashWithSalt2 #-}
+  liftHashWithSalt2 _ h s (Name _ a) = h s a
+  {-# INLINE liftHashWithSalt2 #-}
 
 instance Hashable1 (Name n) where
-  hashWithSalt1 m (Name _ a) = hashWithSalt m a
-  {-# INLINE hashWithSalt1 #-}
+  liftHashWithSalt h s (Name _ a) = h s a
+  {-# INLINE liftHashWithSalt #-}
 
 instance Hashable a => Hashable (Name n a) where
   hashWithSalt m (Name _ a) = hashWithSalt m a
