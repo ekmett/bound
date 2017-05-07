@@ -120,11 +120,25 @@ import Control.Monad.Trans.Maybe (MaybeT (..))
 
 makeBound :: Name -> DecsQ
 makeBound name = do
-  let var  :: ExpQ
-      var  = ConE `fmap` getPure name
+  TyConI dec <- reify name
+  case dec of
+#if MIN_VERSION_template_haskell(2,11,0)
+    DataD _ _name vars _ cons _ -> makeBound' name vars cons
+#else
+    DataD _ _name vars cons _   -> makeBound' name vars cons
+#endif
+    _ -> fail $ show name ++ " Must be a data type."
+
+makeBound' :: Name -> [TyVarBndr] -> [Con] -> DecsQ
+makeBound' name vars cons = do
+  let instanceHead :: Type
+      instanceHead = name `conAppsT` map VarT (typeVars (init vars))
+
+      var  :: ExpQ
+      var  = ConE `fmap` getPure name vars cons
 
       bind :: ExpQ
-      bind = constructBind name
+      bind = constructBind name vars cons
 
 #if __GLASGOW_HASKELL__ < 708
       def :: Name -> DecQ -> [DecQ]
@@ -169,19 +183,19 @@ makeBound name = do
   --     y <- fy
   --     pure (f y)
   applicative <-
-    instanceD (cxt []) (appT (conT ''Applicative) (conT name))
+    instanceD (cxt []) (appT (conT ''Applicative) (pure instanceHead))
       (pureBody 'pure ++ apBody)
 
   -- instance Monad $name where
   --   return = $var
   --   (>>=)  = $bind
   monad <-
-    instanceD (cxt []) (appT (conT ''Monad) (conT name))
+    instanceD (cxt []) (appT (conT ''Monad) (pure instanceHead))
       (pureBody 'return ++ bindBody)
 
   pure [applicative, monad]
 #else
-  [d| instance Applicative $(conT name) where
+  [d| instance Applicative $(pure instanceHead) where
         pure = $var
         {-# INLINE pure #-}
 
@@ -191,7 +205,7 @@ makeBound name = do
           pure (f y)
         {-# INLINE (<*>) #-}
 
-      instance Monad $(conT name) where
+      instance Monad $(pure instanceHead) where
 # if __GLASGOW_HASKELL__ < 710
         return = $var
         {-# INLINE return #-}
@@ -215,19 +229,13 @@ data Components
   | Variable Name
   deriving Show
 
-constructBind :: Name -> ExpQ
-constructBind name = do
-  TyConI dec <- reify name
+constructBind :: Name -> [TyVarBndr] -> [Con] -> ExpQ
+constructBind name vars cons = do
+  interpret =<< construct name vars cons
 
-  interpret =<< construct dec
-
-construct :: Dec -> Q [Components]
-#if MIN_VERSION_template_haskell(2,11,0)
-construct (DataD _ name tyvar _ constructors _) = do
-#else
-construct (DataD _ name tyvar constructors _) = do
-#endif
-  var <- getPure name
+construct :: Name -> [TyVarBndr] -> [Con] -> Q [Components]
+construct name vars constructors = do
+  var <- getPure name vars constructors
   for constructors $ \con -> do
     case con of
       NormalC conName [(_, _)]
@@ -244,10 +252,9 @@ construct (DataD _ name tyvar constructors _) = do
         pure (Component conName [bndA, bndB])
       _ -> error "Not implemented."
 
-
   where
   expa :: Type
-  expa = ConT name `AppT` VarT (getName (last tyvar))
+  expa = name `conAppsT` map VarT (typeVars vars)
 
   typeToBnd :: Type -> Q (Name, Prop)
   typeToBnd ty = do
@@ -257,7 +264,7 @@ construct (DataD _ name tyvar constructors _) = do
     pure $ case () of
       _ | ty == expa           -> (var, Exp)
         | boundInstance        -> (var, Bound)
-        | ConT{} <- ty         -> (var, Konst)
+        | isKonst ty           -> (var, Konst)
         | Just n <- functorApp -> (var, Funktor n)
         | otherwise            -> error $ "This is bad: "
                                         ++ show ty
@@ -271,8 +278,15 @@ construct (DataD _ name tyvar constructors _) = do
   --  -> True
   isBound :: Type -> Q Bool
   isBound ty
-    | Just a <- stripLast2 ty = isInstance ''Bound [a]
+    -- We might fail with kind error, but we don't care
+    | Just a <- stripLast2 ty = pure False `recover` isInstance ''Bound [a]
     | otherwise               = return False
+
+  isKonst :: Type -> Bool
+  isKonst ConT {} = True
+  isKonst (VarT n) = n /= getName (last vars)
+  isKonst (AppT a b) = isKonst a && isKonst b
+  isKonst _ = False
 
   isFunctorApp :: Type -> Q (Maybe Int)
   isFunctorApp = runMaybeT . go
@@ -284,8 +298,6 @@ construct (DataD _ name tyvar constructors _) = do
           n <- go x
           pure $ n + 1
       go _              = mzero
-
-construct _ = error "Must be a data type."
 
 interpret :: [Components] -> ExpQ
 interpret bnds = do
@@ -338,14 +350,8 @@ getName (PlainTV name)    = name
 getName (KindedTV name _) = name
 
 -- Returns candidate
-getPure :: Name -> Q Name
-getPure name = do
-#if MIN_VERSION_template_haskell(2,11,0)
-  TyConI (DataD _ _ tyvr _ cons _) <- reify name
-#else
-  TyConI (DataD _ _ tyvr cons _) <- reify name
-#endif
-
+getPure :: Name -> [TyVarBndr] -> [Con] -> Q Name
+getPure _name tyvr cons= do
   let
     findReturn :: Type -> [(Name, [Type])] -> Name
     findReturn ty constrs =
@@ -380,3 +386,19 @@ getPure name = do
   return (findReturn lastTyVar (allTypeArgs `fmap` cons))
 #else
 #endif
+
+-------------------------------------------------------------------------------
+-- Type mangling
+-------------------------------------------------------------------------------
+
+-- | Extraty type variables
+typeVars :: [TyVarBndr] -> [Name]
+typeVars = map varBindName
+
+varBindName :: TyVarBndr -> Name
+varBindName (PlainTV n)    = n
+varBindName (KindedTV n _) = n
+
+-- | Apply arguments to a type constructor.
+conAppsT :: Name -> [Type] -> Type
+conAppsT conName = foldl AppT (ConT conName)
