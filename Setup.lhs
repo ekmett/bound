@@ -1,18 +1,31 @@
 \begin{code}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wall #-}
 module Main (main) where
+
+-- There are three options
+--
+-- * If we have cabal-doctest, we use it
+--
+-- * If we have Cabal < 2.1, we use shim
+--
+-- * Otherwise we use defaultMain. In this case we issue a warning
+--   if MIN_VERSION_ macros are set.
 
 #ifndef MIN_VERSION_cabal_doctest
 #define MIN_VERSION_cabal_doctest(x,y,z) 0
 #endif
 
+#ifndef MIN_VERSION_Cabal
+#define MIN_VERSION_Cabal(x,y,z) 0
+#endif
 
 #if MIN_VERSION_cabal_doctest(1,0,0)
 import Distribution.Extra.Doctest ( defaultMainWithDoctests )
 #else
 
--- Otherwise we provide a shim
+#if !MIN_VERSION_Cabal(2,1,0)
 
 #ifndef MIN_VERSION_Cabal
 #define MIN_VERSION_Cabal(x,y,z) 0
@@ -124,8 +137,8 @@ generateBuildModule testsuiteName flags pkg lbi = do
     formatOne (installedPkgId, pkgId)
       -- The problem is how different cabal executables handle package databases
       -- when doctests depend on the library
-      | packageId pkg == pkgId = "-package=" ++ display pkgId
-      | otherwise              = "-package-id=" ++ display installedPkgId
+      | display (packageId pkg) == display pkgId = "-package=" ++ display pkgId
+      | otherwise                                = "-package-id=" ++ display installedPkgId
 
     -- From Distribution.Simple.Program.GHC
     packageDbArgs :: [PackageDB] -> [String]
@@ -164,8 +177,8 @@ generateBuildModule testsuiteName flags pkg lbi = do
        isSpecific (SpecificPackageDB _) = True
        isSpecific _                     = False
 
-testDeps :: ComponentLocalBuildInfo -> ComponentLocalBuildInfo -> [(InstalledPackageId, PackageId)]
-testDeps xs ys = nub $ componentPackageDeps xs ++ componentPackageDeps ys
+    -- no type signature on purpose
+    testDeps xs ys = nub $ componentPackageDeps xs ++ componentPackageDeps ys
 
 defaultMainWithDoctests :: String -> IO ()
 defaultMainWithDoctests testSuiteName = defaultMainWithHooks simpleUserHooks
@@ -174,6 +187,23 @@ defaultMainWithDoctests testSuiteName = defaultMainWithHooks simpleUserHooks
      buildHook simpleUserHooks pkg lbi hooks flags
   }
 
+#else
+
+import Distribution.Simple
+
+#ifdef MIN_VERSION_base
+-- If the macro is defined, we have new cabal-install,
+-- but for some reason we don't have cabal-doctest in package-db
+--
+-- Probably we are running cabal sdist, when otherwise using new-build
+-- workflow
+import Warning ()
+#endif
+
+defaultMainWithDoctests :: String -> IO ()
+defaultMainWithDoctests _ = defaultMain
+
+#endif
 #endif
 
 main :: IO ()
