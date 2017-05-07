@@ -48,6 +48,14 @@ extra-source-files:
   CHANGELOG.markdown
   AUTHORS.markdown
 
+tested-with:
+  GHC==7.4.2,
+  GHC==7.6.3,
+  GHC==7.8.4,
+  GHC==7.10.3,
+  GHC==8.0.2,
+  GHC==8.2.1
+
 flag template-haskell
   description:
     You can disable the use of the `template-haskell` package using `-f-template-haskell`.
@@ -55,6 +63,12 @@ flag template-haskell
     Disabling this is an unsupported configuration, but it may be useful for accelerating builds in sandboxes for expert users.
   default: True
   manual: True
+
+custom-setup
+  setup-depends:
+    base >= 4 && <5,
+    Cabal,
+    cabal-doctest >= 1.0.1 && <1.1
 
 source-repository head
   type: git
@@ -153,8 +167,6 @@ test-suite doctests
   ghc-options: -Wall -threaded
   build-depends:
     base,
-    directory >= 1.0 && < 1.4,
-    doctest   >= 0.9 && < 0.12,
-    filepath,
+    doctest   >= 0.11.2 && < 0.12,
     vector    >= 0.9 && < 0.13,
     void
