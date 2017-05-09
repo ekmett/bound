@@ -68,6 +68,7 @@ import Bound.Class
 import Bound.Var
 import Control.Applicative
 import Control.Monad hiding (mapM, mapM_)
+import Control.Monad.Morph
 import Control.Monad.Trans.Class
 import Data.Bifunctor
 import Data.Bifoldable
@@ -153,6 +154,14 @@ instance Monad f => Monad (Scope b f) where
 instance MonadTrans (Scope b) where
   lift ma = Scope (liftM F ma)
   {-# INLINE lift #-}
+
+instance MFunctor (Scope b) where
+#if __GLASGOW_HASKELL__ < 710
+  hoist f = hoistScope f
+#else
+  hoist = hoistScope
+#endif
+  {-# INLINE hoist #-}
 
 #if (MIN_VERSION_transformers(0,5,0)) || !(MIN_VERSION_transformers(0,4,0))
 instance (Eq b, Eq1 f) => Eq1 (Scope b f)  where
