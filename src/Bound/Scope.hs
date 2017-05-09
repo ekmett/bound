@@ -71,7 +71,6 @@ import Bound.Var
 import Control.Applicative
 import Control.Monad hiding (mapM, mapM_)
 import Control.Monad.Morph
-import Control.Monad.Trans.Class
 import Data.Bifunctor
 import Data.Bifoldable
 import qualified Data.Binary as Binary
