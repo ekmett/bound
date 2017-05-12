@@ -1,9 +1,10 @@
 2
 -
-
 * GHC 8.0 and 8.2 support
 * Converted from `prelude-extras` to `transformers` + `transformers-compat` for the `Eq1`, `Ord1`, `Show1`, and `Read1` functionality.
 * `makeBound` supports `Functor` components
+* Add `MFunctor` instance for `Scope`
+* Add `NFData` instances for `Name`, `Scope`, and `Var`
 * Revamp `Setup.hs` to use `cabal-doctest`. This makes it build
   with `Cabal-1.25`, and makes the `doctest`s work with `cabal new-build` and
   sandboxes.
