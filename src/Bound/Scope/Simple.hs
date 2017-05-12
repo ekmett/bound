@@ -88,6 +88,9 @@ import Data.Serialize (Serialize)
 import Data.Traversable
 import Prelude hiding (foldr, mapM, mapM_)
 
+-- $setup
+-- >>> import Bound.Var
+
 -------------------------------------------------------------------------------
 -- Scopes
 -------------------------------------------------------------------------------

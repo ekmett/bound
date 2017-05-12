@@ -91,6 +91,9 @@ import Data.Traversable
 import Prelude hiding (foldr, mapM, mapM_)
 import Data.Data
 
+-- $setup
+-- >>> import Bound.Var
+
 -------------------------------------------------------------------------------
 -- Scopes
 -------------------------------------------------------------------------------
