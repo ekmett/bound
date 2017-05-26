@@ -61,6 +61,7 @@ module Bound.Scope.Simple
 import Bound.Class
 import Bound.Var
 import Control.Applicative
+import Control.DeepSeq
 import Control.Monad hiding (mapM, mapM_)
 import Control.Monad.Morph
 import Data.Bifunctor
@@ -122,6 +123,9 @@ deriving instance Functor f => Generic1 (Scope b f)
 -------------------------------------------------------------------------------
 -- Instances
 -------------------------------------------------------------------------------
+
+instance NFData (f (Var b a)) => NFData (Scope b f a) where
+  rnf (Scope x) = rnf x
 
 instance Functor f => Functor (Scope b f) where
   fmap f (Scope a) = Scope (fmap (fmap f) a)
