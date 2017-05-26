@@ -34,7 +34,7 @@
 module Bound.Scope
   ( Scope(..)
   -- * Abstraction
-  , abstract, abstract1
+  , abstract, abstractE, abstract1, abstractAll
   -- * Instantiation
   , instantiate, instantiate1
   -- * Traditional de Bruijn
@@ -261,6 +261,20 @@ abstract f e = Scope (liftM k e) where
     Just z  -> B z
     Nothing -> F (return y)
 {-# INLINE abstract #-}
+
+-- | Capture some free variables in an expression to yield
+-- a 'Scope' with bound variables in @b@. Optionally change the
+-- types of the remaining free variables.
+abstractE :: Monad f => (a -> Either a' b) -> f a -> Scope b f a'
+abstractE f e = Scope (liftM k e) where
+  k y = case f y of
+    Right z -> B z
+    Left y' -> F (return y')
+
+-- | Capture all the free variables in an expression to yield
+-- a 'Scope' with bound variables in @b@.
+abstractAll :: Monad f => (a -> b) -> f a -> Scope b f c
+abstractAll f = abstractE (Right . f)
 
 -- | Abstract over a single variable
 --
