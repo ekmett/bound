@@ -93,6 +93,9 @@ data Name n b = Name n b deriving
 # if __GLASGOW_HASKELL__ >= 704
   , Generic
 # endif
+# if __GLASGOW_HASKELL__ >= 706
+  , Generic1
+#endif
 #endif
   )
 

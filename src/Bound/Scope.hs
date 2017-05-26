@@ -6,9 +6,11 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
-
 #if __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
+#endif
+#if __GLASGOW_HASKELL__ >= 704
+{-# LANGUAGE DeriveGeneric #-}
 #endif
 
 #endif
@@ -90,6 +92,13 @@ import Data.Serialize (Serialize)
 import Data.Traversable
 import Prelude hiding (foldr, mapM, mapM_)
 import Data.Data
+#if defined(__GLASGOW_HASKELL__)
+#if __GLASGOW_HASKELL__ >= 706
+import GHC.Generics ( Generic, Generic1 )
+#elif __GLASGOW_HASKELL__ >= 704
+import GHC.Generics ( Generic )
+#endif
+#endif
 
 -- $setup
 -- >>> import Bound.Var
@@ -118,8 +127,19 @@ import Data.Data
 -- @f (Var b a)@, but the extra @f a@ inside permits us a cheaper 'lift'.
 --
 newtype Scope b f a = Scope { unscope :: f (Var b (f a)) }
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
-  deriving Typeable
+#if defined(__GLASGOW_HASKELL__)
+  deriving
+           (
+#if __GLASGOW_HASKELL__ >= 707
+             Typeable
+#endif
+#if __GLASGOW_HASKELL__ >= 704
+           , Generic
+#endif
+#if __GLASGOW_HASKELL__ >= 706
+           , Generic1
+#endif
+           )
 #endif
 
 -------------------------------------------------------------------------------

@@ -87,6 +87,9 @@ data Var b a
 # if __GLASGOW_HASKELL__ >= 704
   , Generic
 # endif
+# if __GLASGOW_HASKELL__ >= 706
+  , Generic1
+#endif
 #endif
   )
 
