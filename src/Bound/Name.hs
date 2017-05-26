@@ -36,6 +36,8 @@ module Bound.Name
   , _Name
   , name
   , abstractName
+  , abstractEName
+  , abstractAllName
   , abstract1Name
   , instantiateName
   , instantiate1Name
@@ -251,6 +253,20 @@ abstractName f t = Scope (liftM k t) where
 abstract1Name :: (Monad f, Eq a) => a -> f a -> Scope (Name a ()) f a
 abstract1Name a = abstractName (\b -> if a == b then Just () else Nothing)
 {-# INLINE abstract1Name #-}
+
+-- | Capture some free variables in an expression to yield
+-- a 'Scope' with named bound variables. Optionally change the
+-- types of the remaining free variables.
+abstractEName :: Monad f => (a -> Either a' b) -> f a -> Scope (Name a b) f a'
+abstractEName f e = Scope (liftM k e) where
+  k y = case f y of
+    Right z -> B (Name y z)
+    Left y' -> F (return y')
+
+-- | Capture all the free variables in an expression to yield
+-- a 'Scope' with named bound variables in @b@.
+abstractAllName :: Monad f => (a -> b) -> f a -> Scope (Name a b) f c
+abstractAllName f = abstractEName (Right . f)
 
 -------------------------------------------------------------------------------
 -- Instantiation
