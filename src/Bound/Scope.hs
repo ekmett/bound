@@ -6,17 +6,8 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
-#if __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
-#endif
-#if __GLASGOW_HASKELL__ >= 704
 {-# LANGUAGE DeriveGeneric #-}
-#endif
-
-#endif
-
-#ifndef MIN_VERSION_base
-#define MIN_VERSION_base(x,y,z) 1
 #endif
 
 -----------------------------------------------------------------------------
@@ -95,7 +86,7 @@ import Data.Data
 #if defined(__GLASGOW_HASKELL__)
 #if __GLASGOW_HASKELL__ >= 706
 import GHC.Generics ( Generic, Generic1 )
-#elif __GLASGOW_HASKELL__ >= 704
+#else
 import GHC.Generics ( Generic )
 #endif
 #endif
@@ -128,18 +119,13 @@ import GHC.Generics ( Generic )
 --
 newtype Scope b f a = Scope { unscope :: f (Var b (f a)) }
 #if defined(__GLASGOW_HASKELL__)
-  deriving
-           (
-#if __GLASGOW_HASKELL__ >= 707
-             Typeable
-#endif
-#if __GLASGOW_HASKELL__ >= 704
-           , Generic
+  deriving (Generic)
+#if (__GLASGOW_HASKELL__ >= 707) && (__GLASGOW_HASKELL__ < 800)
+deriving instance Typeable Scope
 #endif
 #if __GLASGOW_HASKELL__ >= 706
-           , Generic1
+deriving instance Functor f => Generic1 (Scope b f)
 #endif
-           )
 #endif
 
 -------------------------------------------------------------------------------
@@ -168,7 +154,7 @@ instance (Functor f, Monad f) => Applicative (Scope b f) where
 -- | The monad permits substitution on free variables, while preserving
 -- bound variables
 instance Monad f => Monad (Scope b f) where
-#if __GLASGOW_HASKELL__ < 710
+#if !MIN_VERSION_base(4,8,0)
   return a = Scope (return (F (return a)))
   {-# INLINE return #-}
 #endif
@@ -182,7 +168,7 @@ instance MonadTrans (Scope b) where
   {-# INLINE lift #-}
 
 instance MFunctor (Scope b) where
-#if __GLASGOW_HASKELL__ < 710
+#if !MIN_VERSION_base(4,8,0)
   hoist t (Scope b) = Scope $ t (liftM (liftM t) b)
 #else
   hoist = hoistScope

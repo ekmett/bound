@@ -4,18 +4,12 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
-
-#if __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
 #endif
 
-#endif
-
-#ifndef MIN_VERSION_base
-#define MIN_VERSION_base(x,y,z) 1
-#endif
 -----------------------------------------------------------------------------
 -- |
 -- Copyright   :  (C) 2013 Edward Kmett
@@ -87,6 +81,13 @@ import qualified Data.Serialize as Serialize
 import Data.Serialize (Serialize)
 import Data.Traversable
 import Prelude hiding (foldr, mapM, mapM_)
+#if defined(__GLASGOW_HASKELL__)
+#if __GLASGOW_HASKELL__ >= 706
+import GHC.Generics (Generic, Generic1)
+#else
+import GHC.Generics (Generic)
+#endif
+#endif
 
 -- $setup
 -- >>> import Bound.Var
@@ -111,7 +112,11 @@ import Prelude hiding (foldr, mapM, mapM_)
 -- therefore with only a 'Functor' instance and no 'Monad' instance.
 newtype Scope b f a = Scope { unscope :: f (Var b a) }
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ > 707
-  deriving Typeable
+  deriving ( Typeable, Generic )
+#endif
+
+#if __GLASGOW_HASKELL__ >= 706
+deriving instance Functor f => Generic1 (Scope b f)
 #endif
 
 -------------------------------------------------------------------------------
@@ -131,7 +136,7 @@ instance Traversable f => Traversable (Scope b f) where
   traverse f (Scope a) = Scope <$> traverse (traverse f) a
   {-# INLINE traverse #-}
 
-#if __GLASGOW_HASKELL__ < 710
+#if !MIN_VERSION_base(4,8,0)
 instance (Functor f, Monad f) => Applicative (Scope b f) where
 #else
 instance Monad f => Applicative (Scope b f) where
@@ -158,7 +163,7 @@ instance MonadTrans (Scope b) where
   {-# INLINE lift #-}
 
 instance MFunctor (Scope b) where
-#if __GLASGOW_HASKELL__ < 710
+#if !MIN_VERSION_base(4,8,0)
   hoist f = hoistScope f
 #else
   hoist = hoistScope

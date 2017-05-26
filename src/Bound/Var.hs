@@ -2,15 +2,8 @@
 
 #ifdef __GLASGOW_HASKELL__
 {-# LANGUAGE DeriveDataTypeable #-}
-
-#if __GLASGOW_HASKELL__ >= 704
 {-# LANGUAGE DeriveGeneric #-}
-#endif
-
-#if __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
-#endif
-
 #endif
 -----------------------------------------------------------------------------
 -- |
@@ -29,16 +22,15 @@ module Bound.Var
   , _F
   ) where
 
-#if __GLASGOW_HASKELL__ < 710
+#if !MIN_VERSION_base(4,8,0)
 import Control.Applicative
-#endif
-import Control.DeepSeq
-import Control.Monad (liftM, ap)
-#if __GLASGOW_HASKELL__ < 710
 import Data.Foldable
 import Data.Traversable
 import Data.Monoid (Monoid(..))
+import Data.Word
 #endif
+import Control.DeepSeq
+import Control.Monad (liftM, ap)
 import Data.Hashable (Hashable(..))
 import Data.Hashable.Lifted (Hashable1(..), Hashable2(..))
 import Data.Bifunctor
@@ -50,17 +42,12 @@ import Data.Bytes.Get
 import Data.Bytes.Put
 import Data.Bytes.Serial
 import Data.Functor.Classes
-#ifdef __GLASGOW_HASKELL__
-import Data.Data
-# if __GLASGOW_HASKELL__ >= 704
-import GHC.Generics
-# endif
-#endif
 import Data.Profunctor
 import qualified Data.Serialize as Serialize
 import Data.Serialize (Serialize)
-#if __GLASGOW_HASKELL__ < 710
-import Data.Word
+#ifdef __GLASGOW_HASKELL__
+import Data.Data
+import GHC.Generics
 #endif
 
 ----------------------------------------------------------------------------
@@ -84,9 +71,7 @@ data Var b a
 #ifdef __GLASGOW_HASKELL__
   , Data
   , Typeable
-# if __GLASGOW_HASKELL__ >= 704
   , Generic
-# endif
 # if __GLASGOW_HASKELL__ >= 706
   , Generic1
 #endif
@@ -254,6 +239,6 @@ instance Show b => Show1 (Var b) where showsPrec1 = showsPrec
 instance Read b => Read1 (Var b) where readsPrec1 = readsPrec
 #endif
 
-# if __GLASGOW_HASKELL__ >= 704
-instance (NFData a, NFData b) => NFData (Var b a)
-# endif
+instance (NFData a, NFData b) => NFData (Var b a) where
+  rnf (B b) = rnf b
+  rnf (F f) = rnf f
