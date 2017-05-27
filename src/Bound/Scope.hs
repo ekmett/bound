@@ -34,9 +34,9 @@
 module Bound.Scope
   ( Scope(..)
   -- * Abstraction
-  , abstract, abstractE, abstract1, abstractAll
+  , abstract, abstract1, abstractEither
   -- * Instantiation
-  , instantiate, instantiate1
+  , instantiate, instantiate1, instantiateEither
   -- * Traditional de Bruijn
   , fromScope
   , toScope
@@ -262,20 +262,6 @@ abstract f e = Scope (liftM k e) where
     Nothing -> F (return y)
 {-# INLINE abstract #-}
 
--- | Capture some free variables in an expression to yield
--- a 'Scope' with bound variables in @b@. Optionally change the
--- types of the remaining free variables.
-abstractE :: Monad f => (a -> Either a' b) -> f a -> Scope b f a'
-abstractE f e = Scope (liftM k e) where
-  k y = case f y of
-    Right z -> B z
-    Left y' -> F (return y')
-
--- | Capture all the free variables in an expression to yield
--- a 'Scope' with bound variables in @b@.
-abstractAll :: Monad f => (a -> b) -> f a -> Scope b f c
-abstractAll f = abstractE (Right . f)
-
 -- | Abstract over a single variable
 --
 -- >>> abstract1 'x' "xyz"
@@ -283,6 +269,15 @@ abstractAll f = abstractE (Right . f)
 abstract1 :: (Monad f, Eq a) => a -> f a -> Scope () f a
 abstract1 a = abstract (\b -> if a == b then Just () else Nothing)
 {-# INLINE abstract1 #-}
+
+-- | Capture some free variables in an expression to yield
+-- a 'Scope' with bound variables in @b@. Optionally change the
+-- types of the remaining free variables.
+abstractEither :: Monad f => (a -> Either b c) -> f a -> Scope b f c
+abstractEither f e = Scope (liftM k e) where
+  k y = case f y of
+    Left z -> B z
+    Right y' -> F (return y')
 
 -------------------------------------------------------------------------------
 -- Instantiation
@@ -306,6 +301,13 @@ instantiate k e = unscope e >>= \v -> case v of
 instantiate1 :: Monad f => f a -> Scope n f a -> f a
 instantiate1 e = instantiate (const e)
 {-# INLINE instantiate1 #-}
+
+-- | Enter a scope, and instantiate all bound and free variables in one go.
+instantiateEither :: Monad f => (Either b a -> f c) -> Scope b f a -> f c
+instantiateEither f s = unscope s >>= \v -> case v of
+  B b -> f (Left b)
+  F ea -> ea >>= f . Right
+{-# INLINE instantiateEither #-}
 
 -------------------------------------------------------------------------------
 -- Traditional de Bruijn

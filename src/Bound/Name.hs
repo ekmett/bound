@@ -36,11 +36,11 @@ module Bound.Name
   , _Name
   , name
   , abstractName
-  , abstractEName
-  , abstractAllName
   , abstract1Name
+  , abstractEitherName
   , instantiateName
   , instantiate1Name
+  , instantiateEitherName
   ) where
 
 import Bound.Scope
@@ -257,16 +257,11 @@ abstract1Name a = abstractName (\b -> if a == b then Just () else Nothing)
 -- | Capture some free variables in an expression to yield
 -- a 'Scope' with named bound variables. Optionally change the
 -- types of the remaining free variables.
-abstractEName :: Monad f => (a -> Either a' b) -> f a -> Scope (Name a b) f a'
-abstractEName f e = Scope (liftM k e) where
+abstractEitherName :: Monad f => (a -> Either b c) -> f a -> Scope (Name a b) f c
+abstractEitherName f e = Scope (liftM k e) where
   k y = case f y of
-    Right z -> B (Name y z)
-    Left y' -> F (return y')
-
--- | Capture all the free variables in an expression to yield
--- a 'Scope' with named bound variables in @b@.
-abstractAllName :: Monad f => (a -> b) -> f a -> Scope (Name a b) f c
-abstractAllName f = abstractEName (Right . f)
+    Left z -> B (Name y z)
+    Right y' -> F (return y')
 
 -------------------------------------------------------------------------------
 -- Instantiation
@@ -286,3 +281,9 @@ instantiateName k e = unscope e >>= \v -> case v of
 instantiate1Name :: Monad f => f a -> Scope n f a -> f a
 instantiate1Name = instantiate1
 {-# INLINE instantiate1Name #-}
+
+instantiateEitherName :: (Monad f, Comonad n) => (Either b a -> f c) -> Scope (n b) f a -> f c
+instantiateEitherName k e = unscope e >>= \v -> case v of
+  B b -> k (Left (extract b))
+  F a -> a >>= k . Right
+{-# INLINE instantiateEitherName #-}
