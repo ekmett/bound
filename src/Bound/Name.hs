@@ -1,16 +1,10 @@
 {-# LANGUAGE CPP #-}
 #ifdef __GLASGOW_HASKELL__
 {-# LANGUAGE DeriveDataTypeable #-}
-
-# if __GLASGOW_HASKELL__ >= 704
 {-# LANGUAGE DeriveGeneric #-}
-# endif
-
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
 #endif
 
-#endif
 -----------------------------------------------------------------------------
 -- |
 -- Copyright   :  (C) 2012 Edward Kmett
@@ -45,17 +39,15 @@ module Bound.Name
 
 import Bound.Scope
 import Bound.Var
-#if __GLASGOW_HASKELL__ < 710
+#if !MIN_VERSION_base(4,8,0)
 import Control.Applicative
-#endif
-import Control.Comonad
-import Control.DeepSeq
-import Control.Monad (liftM, liftM2)
-#if __GLASGOW_HASKELL__ < 710
 import Data.Foldable
 import Data.Monoid
 import Data.Traversable
 #endif
+import Control.Comonad
+import Control.DeepSeq
+import Control.Monad (liftM, liftM2)
 import Data.Bifunctor
 import Data.Bifoldable
 import qualified Data.Binary as Binary
@@ -65,9 +57,7 @@ import Data.Bytes.Serial
 import Data.Functor.Classes
 #ifdef __GLASGOW_HASKELL__
 import Data.Data
-# if __GLASGOW_HASKELL__ >= 704
 import GHC.Generics
-# endif
 #endif
 import Data.Hashable (Hashable(..))
 import Data.Hashable.Lifted (Hashable1(..), Hashable2(..))
@@ -90,9 +80,10 @@ data Name n b = Name n b deriving
 #ifdef __GLASGOW_HASKELL__
   , Typeable
   , Data
-# if __GLASGOW_HASKELL__ >= 704
   , Generic
-# endif
+# if __GLASGOW_HASKELL__ >= 706
+  , Generic1
+#endif
 #endif
   )
 
@@ -233,9 +224,8 @@ instance (Serialize b, Serialize a) => Serialize (Name b a) where
   put = serializeWith2 Serialize.put Serialize.put
   get = deserializeWith2 Serialize.get Serialize.get
 
-# if __GLASGOW_HASKELL__ >= 704
-instance (NFData b, NFData a) => NFData (Name b a)
-# endif
+instance (NFData b, NFData a) => NFData (Name b a) where
+  rnf (Name a b) = rnf a `seq` rnf b
 
 -------------------------------------------------------------------------------
 -- Abstraction
