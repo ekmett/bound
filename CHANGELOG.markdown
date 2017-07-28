@@ -1,3 +1,7 @@
+next
+----
+* Support `doctest-0.12`
+
 2
 -
 * GHC 8.0 and 8.2 support

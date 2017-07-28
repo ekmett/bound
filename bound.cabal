@@ -169,6 +169,7 @@ test-suite doctests
   ghc-options: -Wall -threaded
   build-depends:
     base,
-    doctest   >= 0.11.2 && < 0.12,
+    bound,
+    doctest   >= 0.11.2 && < 0.13,
     vector    >= 0.9 && < 0.13,
     void
