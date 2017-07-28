@@ -1,5 +1,5 @@
-next
-----
+2.0.1
+-----
 * Support `doctest-0.12`
 
 2
