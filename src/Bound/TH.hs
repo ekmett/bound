@@ -23,7 +23,7 @@ module Bound.TH
   ) where
 
 #ifdef MIN_VERSION_template_haskell
-import Data.List        (intercalate, foldr1)
+import Data.List        (intercalate)
 import Data.Traversable (for)
 import Control.Monad    (foldM, mzero, guard)
 import Bound.Class      (Bound((>>>=)))
@@ -379,7 +379,7 @@ getPure _name tyvr cons= do
         (conName, [ t1, t2 ])
       ForallC _ _ conName ->
          allTypeArgs conName
-#if MIN_VERSION_template_haskell(0,2,11)
+#if MIN_VERSION_template_haskell(2,11,0)
       _ -> error "Not implemented"
 #endif
 

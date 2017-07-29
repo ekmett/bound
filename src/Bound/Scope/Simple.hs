@@ -112,8 +112,11 @@ import GHC.Generics (Generic)
 -- Another use case is for syntaxes not stable under substitution,
 -- therefore with only a 'Functor' instance and no 'Monad' instance.
 newtype Scope b f a = Scope { unscope :: f (Var b a) }
+#if defined(__GLASGOW_HASKELL__)
+  deriving Generic
+#endif
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ > 707
-  deriving ( Typeable, Generic )
+deriving instance Typeable Scope
 #endif
 
 #if __GLASGOW_HASKELL__ >= 706
