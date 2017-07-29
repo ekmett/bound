@@ -1,5 +1,8 @@
 2.0.1
 -----
+* Add `abstractEither` and `instantiateEither` to `Bound.Scope`, and
+  add `abstractEitherName` and `instantiateEitherName` to `Bound.Scope.Name`
+* Add `Generic(1)` instances for `Name` and `Scope`
 * Support `doctest-0.12`
 
 2
