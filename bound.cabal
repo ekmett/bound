@@ -170,6 +170,6 @@ test-suite doctests
   build-depends:
     base,
     bound,
-    doctest   >= 0.11.2 && < 0.13,
+    doctest   >= 0.11.2 && < 0.14,
     vector    >= 0.9 && < 0.13,
     void
