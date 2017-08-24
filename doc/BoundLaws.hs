@@ -77,7 +77,7 @@ But all of the instances above respect these laws, and they are implied by
 the current law for monad transformers, we could just make them the
 Bound class laws.
 
-Btw these laws correspond to requiring (f m) to be an m-left module for every m [1],
+Btw these laws correspond to requiring (f m) to be an right m-module for every m [1],
 so we'd also get a law-abiding fmap for (f m).
 
 
