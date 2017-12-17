@@ -49,7 +49,7 @@ import Control.Monad.Trans.Maybe (MaybeT (..))
 -- {-\# LANGUAGE TemplateHaskell    #-}
 --
 -- import Bound                (Scope, makeBound)
--- import Data.Functor.Classes (Show1, Read1, shosPrec1, readsPrec1)
+-- import Data.Functor.Classes (Show1, Read1, showsPrec1, readsPrec1)
 -- import Data.Deriving        (deriveShow1, deriveRead1)
 --
 -- data Exp a
