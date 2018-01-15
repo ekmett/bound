@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP, DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
-module Deriving where
+module Main where
 
 import Data.List
 import Data.Foldable

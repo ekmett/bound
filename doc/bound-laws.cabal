@@ -1,0 +1,36 @@
+name:          bound-laws
+category:      Language, Compilers/Interpreters
+version:       0.1
+license:       BSD3
+cabal-version: >= 1.9.2
+license-file:  LICENSE
+author:        Edward A. Kmett
+maintainer:    Edward A. Kmett <ekmett@gmail.com>
+stability:     experimental
+homepage:      http://github.com/ekmett/bound/
+bug-reports:   http://github.com/ekmett/bound/issues
+copyright:     Copyright (C) 2012-2013 Edward A. Kmett
+synopsis:      Making de Bruijn Succ Less
+build-type:    Simple
+description:   Some laws for the @Bound@ class
+
+tested-with:
+  GHC==7.4.2,
+  GHC==7.6.3,
+  GHC==7.8.4,
+  GHC==7.10.3,
+  GHC==8.0.2,
+  GHC==8.2.2,
+  GHC==8.4.1
+
+source-repository head
+  type: git
+  location: git://github.com/ekmett/bound.git
+
+library
+  exposed-modules: BoundLaws
+  hs-source-dirs: .
+  ghc-options: -Wall
+  build-depends:
+    base >= 4.5 && < 5,
+    bound

@@ -1,5 +1,12 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE KindSignatures #-}
+module BoundLaws where
+
 import Bound.Class
+#if !(MIN_VERSION_base(4,8,0))
+import Control.Applicative
+#endif
+import Control.Monad
 
 {-
 
@@ -46,6 +53,13 @@ above is plenty enough to specify an AST.
 
 data Exp (f :: (* -> *) -> * -> *) a = Var a | Branch (f (Exp f) a)
 
+instance Bound f => Functor (Exp f) where
+  fmap = liftM
+
+instance Bound f => Applicative (Exp f) where
+  pure = Var
+  (<*>) = ap
+
 instance Bound f => Monad (Exp f) where
   return = Var
   Var a     >>= f = f a
@@ -58,7 +72,7 @@ Is this valid? Let's go to Agda and try to prove the Monad laws.
 
   left-return : ∀ {A B} (x : A)(f : A -> Exp F B) -> (return x >>= f) ≡ f x
   left-return x f = refl
-  
+
   right-return : ∀ {A}(m : Exp F A) -> (m >>= return) ≡ m
   right-return (Var x)    = refl
   right-return (Branch m) = cong Branch {!!}0

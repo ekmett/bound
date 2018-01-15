@@ -38,10 +38,9 @@ extra-source-files:
   .ghci
   .gitignore
   .vim.custom
-  examples/Simple.hs
-  examples/Deriving.hs
-  examples/Overkill.hs
-  tests/doctests.hs
+  doc/*.hs
+  doc/bound-laws.cabal
+  doc/LICENSE
   travis/cabal-apt-install
   travis/config
   README.markdown
@@ -54,7 +53,8 @@ tested-with:
   GHC==7.8.4,
   GHC==7.10.3,
   GHC==8.0.2,
-  GHC==8.2.2
+  GHC==8.2.2,
+  GHC==8.4.1
 
 flag template-haskell
   description:
@@ -66,9 +66,9 @@ flag template-haskell
 
 custom-setup
   setup-depends:
-    base >= 4 && <5,
+    base          >= 4.5   && < 5,
     Cabal,
-    cabal-doctest >= 1.0.1 && <1.1
+    cabal-doctest >= 1.0.1 && < 1.1
 
 source-repository head
   type: git
@@ -88,7 +88,7 @@ library
     Bound.Var
 
   build-depends:
-    base             >= 4       && < 5,
+    base             >= 4.5     && < 5,
     bifunctors       >= 3       && < 6,
     binary           >= 0.5     && < 0.9,
     bytes            >= 0.4     && < 1,
@@ -118,9 +118,9 @@ test-suite Simple
 
   ghc-options: -Wall -threaded
   build-depends:
-    base,
+    base            >= 4.5   && < 5,
     bound,
-    deriving-compat >=0.3.4 && <0.5,
+    deriving-compat >= 0.3.4 && < 0.5,
     transformers,
     transformers-compat
 
@@ -128,9 +128,9 @@ test-suite Overkill
   type: exitcode-stdio-1.0
   main-is: Overkill.hs
   hs-source-dirs: examples
-  ghc-options: -Wall -threaded -main-is Overkill
+  ghc-options: -Wall -threaded
   build-depends:
-    base,
+    base >= 4.5 && < 5,
     bound,
     transformers,
     transformers-compat,
@@ -143,9 +143,9 @@ test-suite Deriving
   type: exitcode-stdio-1.0
   main-is: Deriving.hs
   hs-source-dirs: examples
-  ghc-options: -Wall -threaded -main-is Deriving
+  ghc-options: -Wall -threaded
   build-depends:
-    base,
+    base >= 4.5 && < 5,
     bound,
     transformers,
     transformers-compat
@@ -154,9 +154,9 @@ test-suite Imperative
   type: exitcode-stdio-1.0
   main-is: Imperative.hs
   hs-source-dirs: examples
-  ghc-options: -Wall -threaded -main-is Imperative
+  ghc-options: -Wall -threaded
   build-depends:
-    base,
+    base >= 4.5 && < 5,
     bound,
     transformers,
     transformers-compat,
@@ -168,8 +168,8 @@ test-suite doctests
   hs-source-dirs: tests
   ghc-options: -Wall -threaded
   build-depends:
-    base,
+    base      >= 4.5    && < 5,
     bound,
     doctest   >= 0.11.2 && < 0.14,
-    vector    >= 0.9 && < 0.13,
+    vector    >= 0.9    && < 0.13,
     void

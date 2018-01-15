@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable, RankNTypes, ScopedTypeVariables #-}
-module Imperative where
+module Main where
 
 -- It's possible to use bound "sideways" in order to support terms which do not
 -- have a Monad instance. A typical situation in which this would happen is when
@@ -22,14 +22,14 @@ import Data.Void (Void, absurd)
 
 
 -- PART 1: We want to model a tiny assembly language.
--- 
+--
 --   %0 = add 1 2
 --   %1 = add %0 %0
 --   ret %1
--- 
+--
 -- Add binds a fresh variable, and its operands can either be literals or
 -- previously-bound variables. Ret must be the last instruction.
--- 
+--
 -- Operand is monadic, traversable, and satisfies all the other requirements in
 -- order to be used with bound. But this is not sufficient, since Operand is
 -- not the whole language: we also need to define Prog, the sequence of
@@ -52,13 +52,13 @@ instance Monad Operand where
 -- variables. But since the Var in Operand cannot be replaced with a Prog, this
 -- definition is not monadic, and so we cannot manipulate the (Scope () Prog a)
 -- using bound's functions. This defeats the point of using Scope at all!
--- 
+--
 --   data Prog a
 --     = Ret (Operand a)
 --     | Add (Operand a) (Operand a)
 --           (Scope () Prog a) -- one more bound variable, available
 --                             -- in the rest of the program
--- 
+--
 -- The sideways trick is to replace the Operand constructor with a (* -> *) type
 -- parameter. Instantiating this with the real Operand will allow Operand to
 -- access the same free variables as Prog. But if we instantiate this with
@@ -84,12 +84,12 @@ pInstantiate1 = go instantiate1
   where
     -- A value of type (Prog (Scope b operand) a) contains operands of type
     -- (Scope b operand a), on which we can call instantiate1:
-    -- 
+    --
     --   instantiate1 :: operand a -> Scope b operand a -> operand a
-    -- 
+    --
     -- In the function below, (Scope b operand) and operand become o and o',
     -- and instantiate1 is called f:
-    -- 
+    --
     --   f :: operand v -> o v -> o' v
     go :: forall o o' u
         . (forall v. operand v -> o v -> o' v)
@@ -99,17 +99,17 @@ pInstantiate1 = go instantiate1
                           $ go f' x cc
       where
         -- The rest of the program has access to one extra variable:
-        -- 
+        --
         --   cc :: Prog (Scope () (Scope b operand)) a
-        -- 
+        --
         -- In there, the operands have type (Scope () (Scope b operand) a), and
         -- this time we cannot call instantiate1 because it would instantiate ()
         -- instead of instantiating b. Instead, we create a function f' which
         -- preserves the outer (Scope ()):
-        -- 
+        --
         --   f' :: operand a -> Scope () (Scope b operand) a -> Scope () operand a
         --   f' :: operand a -> Scope () o                 a -> Scope () o'      a
-        -- 
+        --
         -- In the recursive call to go, (Scope () (Scope b operand)) and
         -- (Scope () operand) become o and o', and f' is called f.
         f' :: operand v -> Scope () o v -> Scope () o' v
@@ -142,7 +142,7 @@ evalOperand (Var void) = absurd void
 --               $ Add (Var "%0") (Var "%0") $ pAbstract1 "%1"
 --               $ Ret (Var "%1")
 -- :}
--- 
+--
 -- >>> evalProg prog
 -- 6
 evalProg :: Prog Operand Void -> Int
@@ -151,41 +151,41 @@ evalProg (Add o1 o2 cc) = evalProg cc'
   where
     result :: Int
     result = evalOperand o1 + evalOperand o2
-    
+
     cc' :: Prog Operand Void
     cc' = pInstantiate1 (Lit result) cc
 
 
 -- PART 2: Here's a slightly more complicated language.
--- 
+--
 --   %0 = add 1 2
 --   %1 = add %0 %0
 --   swp %0 %1
 --   ret %1
--- 
+--
 -- The new swp command swaps the contents of two variables, so the two arguments
 -- must be previously-bound variables, they cannot be literals. This time the
 -- naïve definition looks like this:
--- 
+--
 --   data Prog' a
 --     = Ret' (Operand a)
 --     | Swp' a a
 --            (Prog' a)
 --     | Add' (Operand a) (Operand a)
 --            (Scope () Prog' a)
--- 
+--
 -- If we apply the sideways trick to this definition, the newly-bound variables
 -- will only be available in the operands, and so it won't be possible to call
 -- swp on them. The first step towards a solution is to add seemingly-useless
 -- Identity wrappers:
--- 
+--
 --   data Prog' a
 --     = Ret' (Operand a)
 --     | Swp' (Identity a) (Identity a)
 --            (Prog' a)
 --     | Add' (Operand a) (Operand a)
 --            (Scope () Prog' a)
--- 
+--
 -- We can now apply the sideways trick twice: once for Operand, and once for
 -- Identity. This gives us a lot of control: we can bind fresh variables which
 -- can only be used inside the operands, we can bind fresh variables which can
@@ -224,10 +224,10 @@ pInstantiate1' = go (instantiate1 . pure) (instantiate1 . pure)
         go' (Add' o1 o2 cc) = Add' (fo x o1)
                                    (fo x o2)
                                    (go fo' fi' x cc)
-        
+
         fo' :: v -> Scope () o v -> Scope () o' v
         fo' v = Scope . fo (F v) . unscope
-        
+
         fi' :: v -> Scope () i v -> Scope () i' v
         fi' v = Scope . fi (F v) . unscope
 
@@ -253,10 +253,10 @@ pAbstract1' = go abstract1 abstract1
         go' (Add' o1 o2 cc) = Add' (fo x o1)
                                    (fo x o2)
                                    (go fo' fi' x cc)
-        
+
         fo' :: Eq v => v -> Scope () o v -> Scope () o' v
         fo' v = Scope . fo (F v) . unscope
-        
+
         fi' :: Eq v => v -> Scope () i v -> Scope () i' v
         fi' v = Scope . fi (F v) . unscope
 
@@ -272,7 +272,7 @@ evalOperand' (Var ref) = readIORef ref
 --                $ Swp' (Identity "%0") (Identity "%1")
 --                $ Ret' (Var "%1")
 -- :}
--- 
+--
 -- >>> evalProg' prog'
 -- 3
 evalProg' :: Prog' Operand Identity (IORef Int) -> IO Int
