@@ -4,7 +4,7 @@ module BoundLaws where
 
 import Bound.Class
 #if !(MIN_VERSION_base(4,8,0))
-import Control.Applicative
+import Control.Applicative hiding (Const(..))
 #endif
 import Control.Monad
 
