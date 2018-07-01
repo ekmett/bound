@@ -120,7 +120,7 @@ test-suite Simple
   build-depends:
     base            >= 4.5   && < 5,
     bound,
-    deriving-compat >= 0.3.4 && < 0.5,
+    deriving-compat >= 0.3.4 && < 0.6,
     transformers,
     transformers-compat
 
