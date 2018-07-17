@@ -83,6 +83,7 @@ library
     Bound.Class
     Bound.Name
     Bound.Scope
+    Bound.ScopeT
     Bound.Scope.Simple
     Bound.Term
     Bound.TH
