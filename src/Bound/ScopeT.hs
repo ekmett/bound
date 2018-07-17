@@ -20,11 +20,22 @@ module Bound.ScopeT (
     lowerScopeT,
     splatT,
     bindingsT,
+    mapBoundT,
+    mapScopeT,
+    foldMapBoundT,
+    foldMapScopeT,
+    traverseBoundT_,
+    traverseScopeT_,
+    traverseBoundT,
+    traverseScopeT,
     ) where
 
-import Bound
-import Bound.Name
-import Data.Bifunctor
+import Bound (Var (..), Bound (..), Scope (..))
+import Bound.Name (Name (..))
+import Data.Bifunctor (bimap)
+import Data.Foldable (traverse_)
+import Data.Bifoldable (bifoldMap, bitraverse_)
+import Data.Bitraversable (bitraverse)
 import Data.Functor.Classes
 
 -- | @'Scope' b f a@ is a @t f@ expression abstracted over @f@,
@@ -32,7 +43,7 @@ import Data.Functor.Classes
 --
 -- @'Scope' n f a ~ 'ScopeT' n 'IdentityT' f a@
 -- @'ScopeT' n t f a ~ t ('Scope' n f) a@
--- 
+--
 newtype ScopeT n t f a = ScopeT { unscopeT :: t f (Var n (f a)) }
 
 -------------------------------------------------------------------------------
@@ -246,6 +257,69 @@ bindingsT (ScopeT s) = foldr f [] s where
   f (B v) vs = v : vs
   f _ vs     = vs
 {-# INLINE bindingsT #-}
+
+-- | Perform a change of variables on bound variables.
+mapBoundT :: Functor (t f) => (b -> b') -> ScopeT b t f a -> ScopeT b' t f a
+mapBoundT f (ScopeT s) = ScopeT (fmap f' s) where
+  f' (B b) = B (f b)
+  f' (F a) = F a
+{-# INLINE mapBoundT #-}
+
+-- | Perform a change of variables, reassigning both bound and free variables.
+mapScopeT
+    :: (Functor (t f), Functor f)
+    => (b -> d) -> (a -> c)
+    -> ScopeT b t f a -> ScopeT d t f c
+mapScopeT f g (ScopeT s) = ScopeT $ fmap (bimap f (fmap g)) s
+{-# INLINE mapScopeT #-}
+
+-- | Obtain a result by collecting information from bound variables
+foldMapBoundT :: (Foldable (t f), Monoid r) => (b -> r) -> ScopeT b t f a -> r
+foldMapBoundT f (ScopeT s) = foldMap f' s where
+  f' (B a) = f a
+  f' _     = mempty
+{-# INLINE foldMapBoundT #-}
+
+-- | Obtain a result by collecting information from both bound and free
+-- variables
+foldMapScopeT
+    :: (Foldable f, Foldable (t f), Monoid r)
+    => (b -> r) -> (a -> r)
+    -> ScopeT b t f a -> r
+foldMapScopeT f g (ScopeT s) = foldMap (bifoldMap f (foldMap g)) s
+{-# INLINE foldMapScopeT #-}
+
+-- | 'traverse_' the bound variables in a 'Scope'.
+traverseBoundT_ :: (Applicative g, Foldable (t f)) => (b -> g d) -> ScopeT b t f a -> g ()
+traverseBoundT_ f (ScopeT s) = traverse_ f' s
+  where f' (B a) = () <$ f a
+        f' _     = pure ()
+{-# INLINE traverseBoundT_ #-}
+
+-- | 'traverse_' both the variables bound by this scope and any free variables.
+traverseScopeT_
+    :: (Applicative g, Foldable f, Foldable (t f))
+    => (b -> g d) -> (a -> g c)
+    -> ScopeT b t f a -> g ()
+traverseScopeT_ f g (ScopeT s) = traverse_ (bitraverse_ f (traverse_ g)) s
+{-# INLINE traverseScopeT_ #-}
+
+-- | 'traverse' the bound variables in a 'Scope'.
+traverseBoundT
+    :: (Applicative g, Traversable (t f))
+    => (b -> g c) -> ScopeT b t f a -> g (ScopeT c t f a)
+traverseBoundT f (ScopeT s) = ScopeT <$> traverse f' s where
+  f' (B b) = B <$> f b
+  f' (F a) = pure (F a)
+{-# INLINE traverseBoundT #-}
+
+-- | 'traverse' both bound and free variables
+traverseScopeT
+    :: (Applicative g, Traversable f, Traversable (t f))
+    => (b -> g d) -> (a -> g c)
+    -> ScopeT b t f a -> g (ScopeT d t f c)
+traverseScopeT f g (ScopeT s) = ScopeT <$> traverse (bitraverse f (traverse g)) s
+{-# INLINE traverseScopeT #-}
 
 -- $setup
 -- >>> import Control.Monad.Trans.Maybe
