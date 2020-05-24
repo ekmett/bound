@@ -284,7 +284,7 @@ construct name vars constructors = do
 
   isKonst :: Type -> Bool
   isKonst ConT {} = True
-  isKonst (VarT n) = n /= getName (last vars)
+  isKonst (VarT n) = n /= varBindName (last vars)
   isKonst (AppT a b) = isKonst a && isKonst b
   isKonst _ = False
 
@@ -345,10 +345,6 @@ stripLast2 (a `AppT` b `AppT` _ `AppT` d)
   | otherwise   = Just (a `AppT` b)
 stripLast2 _ = Nothing
 
-getName :: TyVarBndr -> Name
-getName (PlainTV name)    = name
-getName (KindedTV name _) = name
-
 -- Returns candidate
 getPure :: Name -> [TyVarBndr] -> [Con] -> Q Name
 getPure _name tyvr cons= do
@@ -367,7 +363,7 @@ getPure _name tyvr cons= do
     --
     --   lastTyVar = c
     lastTyVar :: Type
-    lastTyVar = VarT (last (map getName tyvr))
+    lastTyVar = VarT (last (typeVars tyvr))
 
     allTypeArgs :: Con -> (Name, [Type])
     allTypeArgs con = case con of
