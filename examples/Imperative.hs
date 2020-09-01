@@ -8,7 +8,7 @@ module Main where
 -- statement.
 
 import Bound.Class
-import Bound.Scope.Simple
+import Bound.Scope -- .Simple
 import Bound.Term
 import Bound.Var
 import Control.Applicative
@@ -91,8 +91,8 @@ pInstantiate1 = go instantiate1
     -- and instantiate1 is called f:
     --
     --   f :: operand v -> o v -> o' v
-    go :: forall o o' u
-        . (forall v. operand v -> o v -> o' v)
+    go :: forall o o' u. (Monad o, Monad o')
+       => (forall v. operand v -> o v -> o' v)
        -> operand u -> Prog o u -> Prog o' u
     go f x (Ret o)        = Ret (f x o)
     go f x (Add o1 o2 cc) = Add (f x o1) (f x o2)
@@ -113,7 +113,7 @@ pInstantiate1 = go instantiate1
         -- In the recursive call to go, (Scope () (Scope b operand)) and
         -- (Scope () operand) become o and o', and f' is called f.
         f' :: operand v -> Scope () o v -> Scope () o' v
-        f' v = Scope . f (fmap F v) . unscope
+        f' v = toScope . f (fmap F v) . fromScope
 
 pAbstract1 :: forall operand a. (Applicative operand, Monad operand, Eq a)
            => a
@@ -121,7 +121,7 @@ pAbstract1 :: forall operand a. (Applicative operand, Monad operand, Eq a)
            -> Prog (Scope () operand) a
 pAbstract1 = go abstract1
   where
-    go :: forall o o' u. Eq u
+    go :: forall o o' u. (Eq u, Monad o, Monad o')
        => (forall v. Eq v => v -> o v -> o' v)
        -> u -> Prog o u -> Prog o' u
     go f x (Ret o)        = Ret (f x o)
@@ -129,7 +129,7 @@ pAbstract1 = go abstract1
                           $ go f' x cc
       where
         f' :: forall v. Eq v => v -> Scope () o v -> Scope () o' v
-        f' v = Scope . f (F v) . unscope
+        f' v = toScope . f (F v) . fromScope
 
 evalOperand :: Operand Void -> Int
 evalOperand (Lit i)    = i
@@ -211,8 +211,8 @@ pInstantiate1' :: ( Applicative operand, Monad operand
                -> Prog' operand identity a
 pInstantiate1' = go (instantiate1 . pure) (instantiate1 . pure)
   where
-    go :: forall o o' i i' u
-        . (forall v. v -> o v -> o' v)
+    go :: forall o o' i i' u. (Monad i, Monad i', Monad o, Monad o')
+       => (forall v. v -> o v -> o' v)
        -> (forall v. v -> i v -> i' v)
        -> u -> Prog' o i u -> Prog' o' i' u
     go fo fi x = go'
@@ -226,10 +226,10 @@ pInstantiate1' = go (instantiate1 . pure) (instantiate1 . pure)
                                    (go fo' fi' x cc)
 
         fo' :: v -> Scope () o v -> Scope () o' v
-        fo' v = Scope . fo (F v) . unscope
+        fo' v = toScope . fo (F v) . fromScope
 
         fi' :: v -> Scope () i v -> Scope () i' v
-        fi' v = Scope . fi (F v) . unscope
+        fi' v = toScope . fi (F v) . fromScope
 
 pAbstract1' :: ( Applicative operand, Monad operand
                , Applicative identity, Monad identity
@@ -240,7 +240,7 @@ pAbstract1' :: ( Applicative operand, Monad operand
             -> Prog' (Scope () operand) (Scope () identity) a
 pAbstract1' = go abstract1 abstract1
   where
-    go :: forall o o' i i' u. Eq u
+    go :: forall o o' i i' u. (Eq u, Monad i, Monad i', Monad o, Monad o')
        => (forall v. Eq v => v -> o v -> o' v)
        -> (forall v. Eq v => v -> i v -> i' v)
        -> u -> Prog' o i u -> Prog' o' i' u
@@ -255,10 +255,10 @@ pAbstract1' = go abstract1 abstract1
                                    (go fo' fi' x cc)
 
         fo' :: Eq v => v -> Scope () o v -> Scope () o' v
-        fo' v = Scope . fo (F v) . unscope
+        fo' v = toScope . fo (F v) . fromScope
 
         fi' :: Eq v => v -> Scope () i v -> Scope () i' v
-        fi' v = Scope . fi (F v) . unscope
+        fi' v = toScope . fi (F v) . fromScope
 
 evalOperand' :: Operand (IORef Int) -> IO Int
 evalOperand' (Lit i)   = return i
