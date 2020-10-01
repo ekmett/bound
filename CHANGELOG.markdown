@@ -1,3 +1,7 @@
+next [????.??.??]
+-----------------
+* Allow building with GHC 9.0.
+
 2.0.1
 -----
 * Add `abstractEither` and `instantiateEither` to `Bound.Scope`, and
