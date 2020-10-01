@@ -28,6 +28,7 @@ import Data.Traversable (for)
 import Control.Monad    (foldM, mzero, guard)
 import Bound.Class      (Bound((>>>=)))
 import Language.Haskell.TH
+import Language.Haskell.TH.Datatype.TyVarBndr
 #if __GLASGOW_HASKELL__ < 710
 import Control.Applicative (Applicative, pure, (<*>))
 #endif
@@ -129,7 +130,7 @@ makeBound name = do
 #endif
     _ -> fail $ show name ++ " Must be a data type."
 
-makeBound' :: Name -> [TyVarBndr] -> [Con] -> DecsQ
+makeBound' :: Name -> [TyVarBndrUnit] -> [Con] -> DecsQ
 makeBound' name vars cons = do
   let instanceHead :: Type
       instanceHead = name `conAppsT` map VarT (typeVars (init vars))
@@ -229,11 +230,11 @@ data Components
   | Variable Name
   deriving Show
 
-constructBind :: Name -> [TyVarBndr] -> [Con] -> ExpQ
+constructBind :: Name -> [TyVarBndrUnit] -> [Con] -> ExpQ
 constructBind name vars cons = do
   interpret =<< construct name vars cons
 
-construct :: Name -> [TyVarBndr] -> [Con] -> Q [Components]
+construct :: Name -> [TyVarBndrUnit] -> [Con] -> Q [Components]
 construct name vars constructors = do
   var <- getPure name vars constructors
   for constructors $ \con -> do
@@ -284,7 +285,7 @@ construct name vars constructors = do
 
   isKonst :: Type -> Bool
   isKonst ConT {} = True
-  isKonst (VarT n) = n /= varBindName (last vars)
+  isKonst (VarT n) = n /= tvName (last vars)
   isKonst (AppT a b) = isKonst a && isKonst b
   isKonst _ = False
 
@@ -346,7 +347,7 @@ stripLast2 (a `AppT` b `AppT` _ `AppT` d)
 stripLast2 _ = Nothing
 
 -- Returns candidate
-getPure :: Name -> [TyVarBndr] -> [Con] -> Q Name
+getPure :: Name -> [TyVarBndrUnit] -> [Con] -> Q Name
 getPure _name tyvr cons= do
   let
     findReturn :: Type -> [(Name, [Type])] -> Name
@@ -387,13 +388,9 @@ getPure _name tyvr cons= do
 -- Type mangling
 -------------------------------------------------------------------------------
 
--- | Extraty type variables
-typeVars :: [TyVarBndr] -> [Name]
-typeVars = map varBindName
-
-varBindName :: TyVarBndr -> Name
-varBindName (PlainTV n)    = n
-varBindName (KindedTV n _) = n
+-- | Extract type variables
+typeVars :: [TyVarBndr_ flag] -> [Name]
+typeVars = map tvName
 
 -- | Apply arguments to a type constructor.
 conAppsT :: Name -> [Type] -> Type
