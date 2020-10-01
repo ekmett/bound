@@ -170,11 +170,7 @@ instance MonadTrans (Scope b) where
   {-# INLINE lift #-}
 
 instance MFunctor (Scope b) where
-#if !MIN_VERSION_base(4,8,0)
   hoist f = hoistScope f
-#else
-  hoist = hoistScope
-#endif
   {-# INLINE hoist #-}
 
 #if (MIN_VERSION_transformers(0,5,0)) || !(MIN_VERSION_transformers(0,4,0))
