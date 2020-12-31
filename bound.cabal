@@ -11,7 +11,7 @@ homepage:      http://github.com/ekmett/bound/
 bug-reports:   http://github.com/ekmett/bound/issues
 copyright:     Copyright (C) 2012-2013 Edward A. Kmett
 synopsis:      Making de Bruijn Succ Less
-build-type:    Custom
+build-type:    Simple
 description:
    We represent the target language itself as an ideal monad supplied by the
    user, and provide a 'Scope' monad transformer for introducing bound variables
@@ -62,12 +62,6 @@ flag template-haskell
     Disabling this is an unsupported configuration, but it may be useful for accelerating builds in sandboxes for expert users.
   default: True
   manual: True
-
-custom-setup
-  setup-depends:
-    base          >= 4.5   && < 5,
-    Cabal,
-    cabal-doctest >= 1.0.1 && < 1.1
 
 source-repository head
   type: git
@@ -168,17 +162,4 @@ test-suite Imperative
     bound,
     transformers,
     transformers-compat,
-    void
-
-test-suite doctests
-  type:    exitcode-stdio-1.0
-  main-is: doctests.hs
-  hs-source-dirs: tests
-  ghc-options: -Wall -threaded
-  default-language: Haskell2010
-  build-depends:
-    base      >= 4.5    && < 5,
-    bound,
-    doctest   >= 0.11.2 && < 0.18,
-    vector    >= 0.9    && < 0.13,
     void

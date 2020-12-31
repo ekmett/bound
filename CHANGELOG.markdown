@@ -1,3 +1,8 @@
+next [yyyy.mm.dd]
+-----------------
+* The build-type has been changed from `Custom` to `Simple`.
+  To achieve this, the `doctests` test suite has been removed in favor of using [`cabal-docspec`](https://github.com/phadej/cabal-extras/tree/master/cabal-docspec) to run the doctests.
+
 2.0.2 [2020.10.01]
 ------------------
 * Allow building with GHC 9.0.
