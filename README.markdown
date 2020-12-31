@@ -1,7 +1,7 @@
 Bound
 =====
 
-[![Hackage](https://img.shields.io/hackage/v/bound.svg)](https://hackage.haskell.org/package/bound) [![Build Status](https://secure.travis-ci.org/ekmett/bound.png?branch=master)](http://travis-ci.org/ekmett/bound)
+[![Hackage](https://img.shields.io/hackage/v/bound.svg)](https://hackage.haskell.org/package/bound) [![Build Status](https://github.com/ekmett/bound/workflows/Haskell-CI/badge.svg)](https://github.com/ekmett/bound/actions?query=workflow%3AHaskell-CI)
 
 Goals
 -----
