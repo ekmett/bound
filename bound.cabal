@@ -34,15 +34,11 @@ description:
    instantiation.
 
 extra-source-files:
-  .travis.yml
-  .ghci
   .gitignore
   .vim.custom
   doc/*.hs
   doc/bound-laws.cabal
   doc/LICENSE
-  travis/cabal-apt-install
-  travis/config
   README.markdown
   CHANGELOG.markdown
   AUTHORS.markdown
