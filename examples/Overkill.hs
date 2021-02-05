@@ -12,8 +12,9 @@ module Main where
 -- Dara.Functor.Classes in transformers 0.4.0 are totally different
 #if MIN_VERSION_transformers(0,5,0) || !MIN_VERSION_transformers(0,4,0)
 
-import Data.Vector as Vector hiding ((++), map)
-import Data.List as List
+import qualified Data.Vector as Vector
+import Data.Vector (Vector)
+import qualified Data.List as List
 import Data.Foldable
 import Data.Traversable
 import Data.Monoid (Monoid(..))
