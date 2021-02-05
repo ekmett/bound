@@ -1,5 +1,5 @@
-next [yyyy.mm.dd]
------------------
+2.0.3 [2021.02.05]
+------------------
 * Allow the examples to build with `vector-0.12.2` or later.
 * The build-type has been changed from `Custom` to `Simple`.
   To achieve this, the `doctests` test suite has been removed in favor of using [`cabal-docspec`](https://github.com/phadej/cabal-extras/tree/master/cabal-docspec) to run the doctests.
