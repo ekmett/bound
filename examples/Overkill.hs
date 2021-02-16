@@ -17,7 +17,6 @@ import Data.Vector (Vector)
 import qualified Data.List as List
 import Data.Foldable
 import Data.Traversable
-import Data.Monoid (Monoid(..))
 import Control.Monad
 import Control.Applicative
 import Prelude hiding (foldr)
@@ -25,6 +24,10 @@ import Data.Functor.Classes
 import Data.Vector.Functor.Classes ()
 import Data.Type.Equality
 import Bound
+
+# if !(MIN_VERSION_base(4,8,0))
+import Data.Monoid (Monoid(..))
+# endif
 
 infixl 9 :@
 infixr 5 :>

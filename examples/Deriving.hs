@@ -2,12 +2,15 @@
 module Main where
 
 import Data.List
-import Data.Foldable
-import Data.Traversable
 import Control.Monad
-import Control.Applicative
 import Data.Functor.Classes
 import Bound
+
+#if !(MIN_VERSION_base(4,8,0))
+import Control.Applicative
+import Data.Foldable
+import Data.Traversable
+#endif
 
 infixl 9 :@
 
@@ -40,7 +43,8 @@ instance Eq1   Exp where
   liftEq eq (Case e as)  (Case e' as')   = liftEq eq e e' && liftEq (liftEq eq) as as'
   liftEq _  _            _               = False
 #else
-instance Eq1   Exp
+instance Eq1   Exp where
+  eq1 = (==)
 #endif
 -- And "similarly" for Ord1, Show1 and Read1
 
@@ -60,6 +64,9 @@ instance (Eq1 f, Monad f) => Eq1 (Pat f) where
   liftEq eq (ConP g ps) (ConP g' ps') = g == g' && liftEq (liftEq eq) ps ps'
   liftEq eq (ViewP e p) (ViewP e' p') = liftEq eq e e' && liftEq eq p p'
   liftEq _ _ _ = False
+#else
+instance (Eq1 f, Monad f) => Eq1 (Pat f) where
+  eq1 = (==)
 #endif
 
 instance Bound Pat where
@@ -103,7 +110,7 @@ asp a (P p as) = P (\bs -> AsP (p (a:bs))) (a:as)
 conp :: String -> [P a] -> P a
 conp g ps = P (ConP g . go ps) (ps >>= bindings)
   where
-    go (P p as:ps) bs = p bs : go ps (bs ++ as)
+    go (P p as:ps') bs = p bs : go ps' (bs ++ as)
     go [] _ = []
 
 -- | view patterns can view variables that are bound earlier than them in the pattern

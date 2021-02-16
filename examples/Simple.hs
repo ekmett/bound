@@ -144,18 +144,19 @@ cooked = fromJust $ closed $ let_
 -- TODO: use a real pretty printer
 
 prettyPrec :: [String] -> Bool -> Int -> Exp String -> ShowS
-prettyPrec _      d n (V a)      = showString a
-prettyPrec vs     d n (x :@ y)   = showParen d $ 
+prettyPrec _      _ _ (V a)      = showString a
+prettyPrec vs     d n (x :@ y)   = showParen d $
   prettyPrec vs False n x . showChar ' ' . prettyPrec vs True n y
-prettyPrec (v:vs) d n (Lam b)    = showParen d $ 
+prettyPrec (v:vs) d n (Lam b)    = showParen d $
   showString v . showString ". " . prettyPrec vs False n (instantiate1 (V v) b)
-prettyPrec vs     d n (Let bs b) = showParen d $ 
+prettyPrec []     _ _ (Lam _)    = error "Ran out of variable names"
+prettyPrec vs     d n (Let bs b) = showParen d $
   showString "let" .  foldr (.) id (zipWith showBinding xs bs) .
   showString " in " . indent . prettyPrec ys False n (inst b)
   where (xs,ys) = splitAt (length bs) vs
-        inst = instantiate (\n -> V (xs !! n))
+        inst = instantiate (\n' -> V (xs !! n'))
         indent = showString ('\n' : replicate (n + 4) ' ')
-        showBinding x b = indent . showString x . showString " = " . prettyPrec ys False (n + 4) (inst b)
+        showBinding x b' = indent . showString x . showString " = " . prettyPrec ys False (n + 4) (inst b')
 
 prettyWith :: [String] -> Exp String -> String
 prettyWith vs t = prettyPrec (filter (`notElem` toList t) vs) False 0 t ""

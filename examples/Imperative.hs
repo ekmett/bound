@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable, RankNTypes, ScopedTypeVariables #-}
+{-# LANGUAGE CPP, DeriveFunctor, DeriveFoldable, DeriveTraversable, RankNTypes, ScopedTypeVariables #-}
 module Main where
 
 -- It's possible to use bound "sideways" in order to support terms which do not
@@ -7,18 +7,18 @@ module Main where
 -- are used in positions where it would make no sense to replace them by another
 -- statement.
 
-import Bound.Class
 import Bound.Scope -- .Simple
-import Bound.Term
 import Bound.Var
-import Control.Applicative
 import Control.Monad (ap)
-import Control.Monad.Trans.Class (lift)
-import Data.Foldable
 import Data.Functor.Identity
 import Data.IORef
-import Data.Traversable
 import Data.Void (Void, absurd)
+
+#if !(MIN_VERSION_base(4,8,0))
+import Control.Applicative
+import Data.Foldable
+import Data.Traversable
+#endif
 
 
 -- PART 1: We want to model a tiny assembly language.
