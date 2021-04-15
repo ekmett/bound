@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP, DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
 module Main where
 
-import Data.List
+import qualified Data.List as L
 import Control.Monad
 import Data.Functor.Classes
 import Bound
@@ -117,7 +117,7 @@ conp g ps = P (ConP g . go ps) (ps >>= bindings)
 
 -- | view patterns can view variables that are bound earlier than them in the pattern
 viewp :: Eq a => Exp a -> P a -> P a
-viewp t (P p as) = P (\bs -> ViewP (abstract (`elemIndex` bs) t) (p bs)) as
+viewp t (P p as) = P (\bs -> ViewP (abstract (`L.elemIndex` bs) t) (p bs)) as
 
 -- | smart lam constructor
 --
@@ -130,20 +130,20 @@ viewp t (P p as) = P (\bs -> ViewP (abstract (`elemIndex` bs) t) (p bs)) as
 -- >>> lam (conp "F" [varp "x", viewp (V "y") $ varp "y"]) (V "y")
 -- Lam 2 (ConP "F" [VarP,ViewP (Scope (V (F (V "y")))) VarP]) (Scope (V (B 1)))
 lam :: Eq a => P a -> Exp a -> Exp a
-lam (P p as) t = Lam (length as) (p []) (abstract (`elemIndex` as) t)
+lam (P p as) t = Lam (length as) (p []) (abstract (`L.elemIndex` as) t)
 
 -- | smart let constructor
 let_ :: Eq a => [(a, Exp a)] -> Exp a -> Exp a
 let_ bs b = Let (length bs) (map (abstr . snd) bs) (abstr b)
   where vs  = map fst bs
-        abstr = abstract (`elemIndex` vs)
+        abstr = abstract (`L.elemIndex` vs)
 
 -- | smart alt constructor
 --
 -- >>> lam (varp "x") $ Case (V "x") [alt (conp "Hello" [varp "z",wildp]) (V "x"), alt (varp "y") (V "y")]
 -- Lam 1 VarP (Scope (Case (V (B 0)) [Alt 1 (ConP "Hello" [VarP,WildP]) (Scope (V (F (V (B 0))))),Alt 1 VarP (Scope (V (B 0)))]))
 alt :: Eq a => P a -> Exp a -> Alt Exp a
-alt (P p as) t = Alt (length as) (p []) (abstract (`elemIndex` as) t)
+alt (P p as) t = Alt (length as) (p []) (abstract (`L.elemIndex` as) t)
 
 main :: IO ()
 main = return ()
