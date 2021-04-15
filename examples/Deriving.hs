@@ -27,7 +27,9 @@ instance Applicative Exp where
   (<*>) = ap
 
 instance Monad Exp where
+#if !(MIN_VERSION_base(4,11,0))
   return = V
+#endif
   V a        >>= f = f a
   (x :@ y)   >>= f = (x >>= f) :@ (y >>= f)
   Lam n p e  >>= f = Lam n (p >>>= f) (e >>>= f)

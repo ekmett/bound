@@ -61,7 +61,9 @@ instance Bound f => Applicative (Exp f) where
   (<*>) = ap
 
 instance Bound f => Monad (Exp f) where
+#if !(MIN_VERSION_base(4,11,0))
   return = Var
+#endif
   Var a     >>= f = f a
   Branch fE >>= f = Branch (fE >>>= f)
 
