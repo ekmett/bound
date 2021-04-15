@@ -318,7 +318,11 @@ interpret bnds = do
      exprs <- foldM bindOne (ConE name) bounds
      pure $
        Match
-       (ConP name [ VarP arg | (arg, _) <- bounds ])
+       (ConP name
+#if MIN_VERSION_template_haskell(2,18,0)
+             []
+#endif
+             [ VarP arg | (arg, _) <- bounds ])
        (NormalB
          exprs)
         []
