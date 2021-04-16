@@ -78,7 +78,9 @@ instance Traversable Exp where
   traverse f (Let bs e) = Let <$> traverse (traverse f) bs <*> traverse f e
 
 instance Monad Exp where
+#if !(MIN_VERSION_base(4,11,0))
   return         = Var
+#endif
   Var a    >>= f = f a
   (x :@ y) >>= f = (x >>= f) :@ (y >>= f)
   Lam p e  >>= f = Lam (p >>>= f) (e >>>= f)
