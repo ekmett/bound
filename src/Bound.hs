@@ -26,7 +26,7 @@
 -- import Data.Foldable
 -- import Data.Traversable
 -- -- This is from deriving-compat package
--- import Data.Deriving (deriveEq1, deriveOrd1, deriveRead1, deriveShow1) 
+-- import Data.Deriving (deriveEq1, deriveOrd1, deriveRead1, deriveShow1)
 -- @
 --
 -- @
@@ -128,8 +128,10 @@ module Bound
   , Var(..)
   , fromScope
   , toScope
-  -- * Deriving instances 
+#ifdef MIN_VERSION_template_haskell
+  -- * Deriving instances
   , makeBound
+#endif
   ) where
 
 import Bound.Var
