@@ -19,7 +19,6 @@ import Control.Monad
 import Control.Applicative
 import Prelude hiding (foldr)
 import Data.Functor.Classes
-import Data.Vector.Functor.Classes ()
 import Data.Type.Equality
 import Bound
 
