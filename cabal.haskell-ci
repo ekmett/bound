@@ -4,3 +4,6 @@ unconstrained:          False
 -- irc-channels:           irc.freenode.org#haskell-lens
 irc-if-in-origin-repo:  True
 docspec:                True
+
+constraint-set no-template-haskell
+  constraints: bound -template-haskell

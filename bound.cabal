@@ -92,7 +92,6 @@ library
     mmorph           >= 1.0     && < 1.3,
     deepseq          >= 1.1     && < 1.5,
     profunctors      >= 3.3     && < 6,
-    template-haskell >= 2.7     && < 3,
     th-abstraction   >= 0.4     && < 0.5,
     transformers     >= 0.2     && < 0.6,
     transformers-compat >= 0.5  && < 1
@@ -135,7 +134,7 @@ test-suite Overkill
     bound,
     transformers,
     transformers-compat,
-    functor-classes-compat,
+    functor-classes-compat < 2,
     vector
   if !impl(ghc >= 7.8)
     buildable: False

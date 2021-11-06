@@ -385,8 +385,6 @@ getPure _name tyvr cons= do
 #endif
 
   return (findReturn lastTyVar (allTypeArgs `fmap` cons))
-#else
-#endif
 
 -------------------------------------------------------------------------------
 -- Type mangling
@@ -399,3 +397,5 @@ typeVars = map tvName
 -- | Apply arguments to a type constructor.
 conAppsT :: Name -> [Type] -> Type
 conAppsT conName = foldl AppT (ConT conName)
+#else
+#endif
