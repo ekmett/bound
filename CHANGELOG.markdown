@@ -1,6 +1,7 @@
 next [????.??.??]
 -----------------
 * Allow building with `template-haskell-2.18` (GHC 9.2).
+* Drop support for pre-8.0 versions of GHC.
 
 2.0.3 [2021.02.05]
 ------------------

@@ -83,11 +83,7 @@ import Data.Serialize (Serialize)
 import Data.Traversable
 import Prelude hiding (foldr, mapM, mapM_)
 #if defined(__GLASGOW_HASKELL__)
-#if __GLASGOW_HASKELL__ >= 706
 import GHC.Generics (Generic, Generic1)
-#else
-import GHC.Generics (Generic)
-#endif
 #endif
 
 -- $setup
@@ -115,13 +111,7 @@ newtype Scope b f a = Scope { unscope :: f (Var b a) }
 #if defined(__GLASGOW_HASKELL__)
   deriving Generic
 #endif
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ > 707
-deriving instance Typeable Scope
-#endif
-
-#if __GLASGOW_HASKELL__ >= 706
 deriving instance Functor f => Generic1 (Scope b f)
-#endif
 
 -------------------------------------------------------------------------------
 -- Instances
@@ -143,11 +133,7 @@ instance Traversable f => Traversable (Scope b f) where
   traverse f (Scope a) = Scope <$> traverse (traverse f) a
   {-# INLINE traverse #-}
 
-#if !MIN_VERSION_base(4,8,0)
-instance (Functor f, Monad f) => Applicative (Scope b f) where
-#else
 instance Monad f => Applicative (Scope b f) where
-#endif
   pure a = Scope (return (F a))
   {-# INLINE pure #-}
   (<*>) = ap
@@ -156,10 +142,6 @@ instance Monad f => Applicative (Scope b f) where
 -- | The monad permits substitution on free variables, while preserving
 -- bound variables
 instance Monad f => Monad (Scope b f) where
-#if __GLASGOW_HASKELL__ < 710
-  return a = Scope (return (F a))
-  {-# INLINE return #-}
-#endif
   Scope e >>= f = Scope $ e >>= \v -> case v of
     B b -> return (B b)
     F a -> unscope (f a)
@@ -173,7 +155,6 @@ instance MFunctor (Scope b) where
   hoist f = hoistScope f
   {-# INLINE hoist #-}
 
-#if (MIN_VERSION_transformers(0,5,0)) || !(MIN_VERSION_transformers(0,4,0))
 instance (Eq b, Eq1 f) => Eq1 (Scope b f)  where
   liftEq f m n = liftEq (liftEq f) (unscope m) (unscope n)
 
@@ -201,36 +182,6 @@ instance (Show b, Show1 f, Show a) => Show (Scope b f a) where
 
 instance (Read b, Read1 f, Read a) => Read (Scope b f a) where
   readsPrec = readsPrec1
-#else
-
-instance (Functor f, Eq b, Eq1 f) => Eq1 (Scope b f) where
-  eq1 m n = eq1 (unscope m) (unscope n)
-
-instance (Functor f, Ord b, Ord1 f) => Ord1 (Scope b f) where
-  compare1 m n = compare1 (unscope m) (unscope n)
-
-instance (Functor f, Show b, Show1 f) => Show1 (Scope b f) where
-  showsPrec1 d a = showParen (d > 10) $
-    showString "Scope " . showsPrec1 11 (unscope a)
-
-instance (Functor f, Read b, Read1 f) => Read1 (Scope b f) where
-  readsPrec1 d = readParen (d > 10) $ \r -> do
-    ("Scope", r') <- lex r
-    (s, r'') <- readsPrec1 11 r'
-    return (Scope s, r'')
-
-instance (Functor f, Eq b, Eq1 f, Eq a) => Eq (Scope b f a) where
-  (==) = eq1
-
-instance (Functor f, Ord b, Ord1 f, Ord a) => Ord (Scope b f a) where
-  compare = compare1
-
-instance (Functor f, Show b, Show1 f, Show a) => Show (Scope b f a) where
-  showsPrec = showsPrec1
-
-instance (Functor f, Read b, Read1 f, Read a) => Read (Scope b f a) where
-  readsPrec = readsPrec1
-#endif
 
 instance Bound (Scope b) where
   Scope m >>>= f = Scope $ m >>= \v -> case v of
@@ -479,25 +430,5 @@ instance (Serialize b, Serial1 f, Serialize a) => Serialize (Scope b f a) where
   get = deserializeScope Serialize.get Serialize.get
 
 #ifdef __GLASGOW_HASKELL__
-
-#if __GLASGOW_HASKELL__ < 707
-instance (Typeable b, Typeable1 f) => Typeable1 (Scope b f) where
-  typeOf1 _ = mkTyConApp scopeTyCon [typeOf (undefined :: b), typeOf1 (undefined :: f ())]
-
-scopeTyCon :: TyCon
-#if MIN_VERSION_base(4,4,0)
-scopeTyCon = mkTyCon3 "bound" "Bound.Scope" "Scope"
-#else
-scopeTyCon = mkTyCon "Bound.Scope.Scope"
-#endif
-
-#else
-
--- only needed for ghc7.8.1rc1 compatibility
-#define Typeable1 Typeable
-
-#endif
-
-deriving instance (Typeable b, Typeable1 f, Data a, Data (f (Var b a))) => Data (Scope b f a)
-
+deriving instance (Typeable b, Typeable f, Data a, Data (f (Var b a))) => Data (Scope b f a)
 #endif

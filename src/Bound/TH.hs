@@ -29,9 +29,6 @@ import Control.Monad    (foldM, mzero, guard)
 import Bound.Class      (Bound((>>>=)))
 import Language.Haskell.TH
 import Language.Haskell.TH.Datatype.TyVarBndr
-#if __GLASGOW_HASKELL__ < 710
-import Control.Applicative (Applicative, pure, (<*>))
-#endif
 
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Maybe (MaybeT (..))
@@ -123,11 +120,7 @@ makeBound :: Name -> DecsQ
 makeBound name = do
   TyConI dec <- reify name
   case dec of
-#if MIN_VERSION_template_haskell(2,11,0)
     DataD _ _name vars _ cons _ -> makeBound' name vars cons
-#else
-    DataD _ _name vars cons _   -> makeBound' name vars cons
-#endif
     _ -> fail $ show name ++ " Must be a data type."
 
 makeBound' :: Name -> [TyVarBndrUnit] -> [Con] -> DecsQ
@@ -141,61 +134,6 @@ makeBound' name vars cons = do
       bind :: ExpQ
       bind = constructBind name vars cons
 
-#if __GLASGOW_HASKELL__ < 708
-      def :: Name -> DecQ -> [DecQ]
-#if __GLASGOW_HASKELL__ < 706
-      def _theName dec = [dec]
-#else
-      def theName  dec = [pragInlD theName Inline FunLike AllPhases, dec]
-#endif
-
-      pureBody :: Name -> [DecQ]
-      pureBody pure'or'return =
-        def pure'or'return
-          (valD (varP pure'or'return) (normalB var) [])
-
-      bindBody :: [DecQ]
-      bindBody =
-        def '(>>=)
-          (valD (varP '(>>=)) (normalB bind) [])
-
-  apBody <- do
-    ff <- newName "ff"
-    fy <- newName "fy"
-    f  <- newName "f"
-    y  <- newName "y"
-
-    -- \ff fy -> do
-    --   f <- ff
-    --   y <- fy
-    --   pure (f x)
-    let ap :: ExpQ
-        ap = lamE [varP ff, varP fy] (doE
-              [bindS   (varP f) (varE ff),
-               bindS   (varP y) (varE fy),
-               noBindS (varE 'pure `appE` (varE f `appE` varE y))])
-
-    pure (def '(<*>) (valD (varP '(<*>)) (normalB ap) []))
-
-  -- instance Applicative $name where
-  --   pure   = $var
-  --   (<*>)  = \ff fy -> do
-  --     f <- ff
-  --     y <- fy
-  --     pure (f y)
-  applicative <-
-    instanceD (cxt []) (appT (conT ''Applicative) (pure instanceHead))
-      (pureBody 'pure ++ apBody)
-
-  -- instance Monad $name where
-  --   return = $var
-  --   (>>=)  = $bind
-  monad <-
-    instanceD (cxt []) (appT (conT ''Monad) (pure instanceHead))
-      (pureBody 'return ++ bindBody)
-
-  pure [applicative, monad]
-#else
   [d| instance Applicative $(pure instanceHead) where
         pure = $var
         {-# INLINE pure #-}
@@ -207,15 +145,9 @@ makeBound' name vars cons = do
         {-# INLINE (<*>) #-}
 
       instance Monad $(pure instanceHead) where
-# if __GLASGOW_HASKELL__ < 710
-        return = $var
-        {-# INLINE return #-}
-# endif
-
         (>>=)  = $bind
         {-# INLINE (>>=) #-}
     |]
-#endif
 
 -- Internals
 data Prop
@@ -380,9 +312,7 @@ getPure _name tyvr cons= do
         (conName, [ t1, t2 ])
       ForallC _ _ conName ->
          allTypeArgs conName
-#if MIN_VERSION_template_haskell(2,11,0)
       _ -> error "Not implemented"
-#endif
 
   return (findReturn lastTyVar (allTypeArgs `fmap` cons))
 

@@ -3,10 +3,8 @@
 module BoundLaws where
 
 import Bound.Class
-#if !(MIN_VERSION_base(4,8,0))
-import Control.Applicative hiding (Const(..))
-#endif
 import Control.Monad
+import Data.Kind
 
 {-
 
@@ -18,25 +16,25 @@ Let's start by writing some generic Bound instances.
 
 -}
 
-newtype Const x (m :: * -> *) a = Const x
+newtype Const x (m :: Type -> Type) a = Const x
 
 instance Bound (Const x) where
   Const x >>>= _ = Const x
 
 
-newtype Identity (m :: * -> *) a = Id (m a)
+newtype Identity (m :: Type -> Type) a = Id (m a)
 
 instance Bound Identity where
    Id ma >>>= f = Id (ma >>= f)
 
 
-data Product f g (m :: * -> *) a = f m a :*: g m a
+data Product f g (m :: Type -> Type) a = f m a :*: g m a
 
 instance (Bound f, Bound g) => Bound (Product f g) where
     (fma :*: gma) >>>= f = (fma >>>= f) :*: (gma >>>= f)
 
 
-data Sum f g (m :: * -> *) a = Inl (f m a) | Inr (g m a)
+data Sum f g (m :: Type -> Type) a = Inl (f m a) | Inr (g m a)
 
 instance (Bound f, Bound g) => Bound (Sum f g) where
     Inl fma >>>= f = Inl (fma >>>= f)
@@ -51,7 +49,7 @@ above is plenty enough to specify an AST.
 
 -}
 
-data Exp (f :: (* -> *) -> * -> *) a = Var a | Branch (f (Exp f) a)
+data Exp (f :: (Type -> Type) -> Type -> Type) a = Var a | Branch (f (Exp f) a)
 
 instance Bound f => Functor (Exp f) where
   fmap = liftM

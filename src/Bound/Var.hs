@@ -22,13 +22,6 @@ module Bound.Var
   , _F
   ) where
 
-#if !MIN_VERSION_base(4,8,0)
-import Control.Applicative
-import Data.Foldable
-import Data.Traversable
-import Data.Monoid (Monoid(..))
-import Data.Word
-#endif
 import Control.DeepSeq
 import Control.Monad (liftM, ap)
 import Data.Hashable (Hashable(..))
@@ -70,11 +63,8 @@ data Var b a
   , Read
 #ifdef __GLASGOW_HASKELL__
   , Data
-  , Typeable
   , Generic
-# if __GLASGOW_HASKELL__ >= 706
   , Generic1
-#endif
 #endif
   )
 
@@ -196,7 +186,6 @@ instance Bitraversable Var where
   bitraverse _ g (F a) = F <$> g a
   {-# INLINE bitraverse #-}
 
-#if (MIN_VERSION_transformers(0,5,0)) || !(MIN_VERSION_transformers(0,4,0))
 instance Eq2 Var where
   liftEq2 f _ (B a) (B c) = f a c
   liftEq2 _ g (F b) (F d) = g b d
@@ -226,18 +215,6 @@ instance Show b => Show1 (Var b) where
 
 instance Read b => Read1 (Var b) where
   liftReadsPrec = liftReadsPrec2 readsPrec readList
-
-#else
---instance Eq2 Var   where eq2 = (==)
---instance Ord2 Var  where compare2   = compare
---instance Show2 Var where showsPrec2 = showsPrec
---instance Read2 Var where readsPrec2 = readsPrec
-
-instance Eq b   => Eq1   (Var b) where eq1 = (==)
-instance Ord b  => Ord1  (Var b) where compare1   = compare
-instance Show b => Show1 (Var b) where showsPrec1 = showsPrec
-instance Read b => Read1 (Var b) where readsPrec1 = readsPrec
-#endif
 
 instance (NFData a, NFData b) => NFData (Var b a) where
   rnf (B b) = rnf b
