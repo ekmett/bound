@@ -134,7 +134,7 @@ test-suite Overkill
     bound,
     transformers,
     transformers-compat,
-    functor-classes-compat,
+    functor-classes-compat < 2,
     vector
   if !impl(ghc >= 7.8)
     buildable: False
