@@ -1,6 +1,11 @@
-{-# LANGUAGE CPP             #-}
+{-# LANGUAGE CPP           #-}
+{-# LANGUAGE PatternGuards #-}
+
+#if __GLASGOW_HASKELL__ >= 900
+{-# LANGUAGE TemplateHaskellQuotes #-}
+#else
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE PatternGuards   #-}
+#endif
 
 -----------------------------------------------------------------------------
 -- |
