@@ -84,11 +84,7 @@ import Data.Traversable
 import Prelude hiding (foldr, mapM, mapM_)
 import Data.Data
 #if defined(__GLASGOW_HASKELL__)
-#if __GLASGOW_HASKELL__ >= 706
 import GHC.Generics ( Generic, Generic1 )
-#else
-import GHC.Generics ( Generic )
-#endif
 #endif
 
 -- $setup
@@ -120,13 +116,8 @@ import GHC.Generics ( Generic )
 newtype Scope b f a = Scope { unscope :: f (Var b (f a)) }
 #if defined(__GLASGOW_HASKELL__)
   deriving (Generic)
-#if (__GLASGOW_HASKELL__ >= 707) && (__GLASGOW_HASKELL__ < 800)
-deriving instance Typeable Scope
 #endif
-#if __GLASGOW_HASKELL__ >= 706
 deriving instance Functor f => Generic1 (Scope b f)
-#endif
-#endif
 
 -------------------------------------------------------------------------------
 -- Instances
@@ -154,10 +145,6 @@ instance (Functor f, Monad f) => Applicative (Scope b f) where
 -- | The monad permits substitution on free variables, while preserving
 -- bound variables
 instance Monad f => Monad (Scope b f) where
-#if !MIN_VERSION_base(4,8,0)
-  return a = Scope (return (F (return a)))
-  {-# INLINE return #-}
-#endif
   Scope e >>= f = Scope $ e >>= \v -> case v of
     B b -> return (B b)
     F ea -> ea >>= unscope . f
@@ -168,17 +155,11 @@ instance MonadTrans (Scope b) where
   {-# INLINE lift #-}
 
 instance MFunctor (Scope b) where
-#if !MIN_VERSION_base(4,8,0)
-  hoist t (Scope b) = Scope $ t (liftM (liftM t) b)
-#else
   hoist = hoistScope
-#endif
   {-# INLINE hoist #-}
 
 instance (Monad f, Eq b, Eq1 f, Eq a) => Eq  (Scope b f a) where (==) = eq1
 instance (Monad f, Ord b, Ord1 f, Ord a) => Ord  (Scope b f a) where compare = compare1
-
-#if MIN_VERSION_transformers(0,5,0) || !(MIN_VERSION_transformers(0,4,0))
 
 --------------------------------------------------------------------------------
 -- * transformers 0.5 Data.Functor.Classes
@@ -202,37 +183,6 @@ instance (Read b, Read1 f) => Read1 (Scope b f) where
   liftReadsPrec f g = readsData $ readsUnaryWith (liftReadsPrec (liftReadsPrec f' g') (liftReadList f' g')) "Scope" Scope where
     f' = liftReadsPrec f g
     g' = liftReadList f g
-
-#else
-
---------------------------------------------------------------------------------
--- * transformers 0.4 Data.Functor.Classes
---------------------------------------------------------------------------------
-
-instance (Functor f, Read b, Read1 f, Read a) => Read  (Scope b f a) where readsPrec = readsPrec1
-instance (Functor f, Show b, Show1 f, Show a) => Show (Scope b f a) where showsPrec = showsPrec1
-
-instance (Monad f, Eq b, Eq1 f) => Eq1 (Scope b f) where
-  eq1 a b = eq1 (fromScope a) (fromScope b)
-
-instance (Monad f, Ord b, Ord1 f) => Ord1 (Scope b f) where
-  compare1 a b = fromScope a `compare1` fromScope b
-
-newtype Lift1 f a = Lift1 { lower1 :: f a }
-instance (Show1 f, Show a) => Show (Lift1 f a) where showsPrec d (Lift1 m) = showsPrec1 d m
-instance (Read1 f, Read a) => Read (Lift1 f a) where
-    readsPrec d m = fmap (first Lift1) $ readsPrec1 d m
-
-instance (Functor f, Show b, Show1 f) => Show1 (Scope b f) where
-  showsPrec1 d a = showParen (d > 10) $
-    showString "Scope " . showsPrec1 11 (fmap (fmap Lift1) (unscope a))
-
-instance (Functor f, Read b, Read1 f) => Read1 (Scope b f) where
-  readsPrec1 d = readParen (d > 10) $ \r -> do
-    ("Scope", r') <- lex r
-    (s, r'') <- readsPrec1 11 r'
-    return (Scope (fmap (fmap lower1) s), r'')
-#endif
 
 instance Bound (Scope b) where
   Scope m >>>= f = Scope (liftM (fmap (>>= f)) m)
@@ -511,22 +461,5 @@ instance (Serialize b, Serial1 f, Serialize a) => Serialize (Scope b f a) where
   get = deserializeScope Serialize.get Serialize.get
 
 #ifdef __GLASGOW_HASKELL__
-
-#if __GLASGOW_HASKELL__ < 707
-instance (Typeable b, Typeable1 f) => Typeable1 (Scope b f) where
-  typeOf1 _ = mkTyConApp scopeTyCon [typeOf (undefined :: b), typeOf1 (undefined :: f ())]
-
-scopeTyCon :: TyCon
-#if MIN_VERSION_base(4,4,0)
-scopeTyCon = mkTyCon3 "bound" "Bound.Scope" "Scope"
-#else
-scopeTyCon = mkTyCon "Bound.Scope.Scope"
-#endif
-
-#else
-#define Typeable1 Typeable
-#endif
-
-deriving instance (Typeable b, Typeable1 f, Data a, Data (f (Var b (f a)))) => Data (Scope b f a)
-
+deriving instance (Typeable b, Typeable f, Data a, Data (f (Var b (f a)))) => Data (Scope b f a)
 #endif

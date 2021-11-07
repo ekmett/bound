@@ -39,12 +39,6 @@ module Bound.Name
 
 import Bound.Scope
 import Bound.Var
-#if !MIN_VERSION_base(4,8,0)
-import Control.Applicative
-import Data.Foldable
-import Data.Monoid
-import Data.Traversable
-#endif
 import Control.Comonad
 import Control.DeepSeq
 import Control.Monad (liftM, liftM2)
@@ -78,12 +72,9 @@ data Name n b = Name n b deriving
   ( Show
   , Read
 #ifdef __GLASGOW_HASKELL__
-  , Typeable
   , Data
   , Generic
-# if __GLASGOW_HASKELL__ >= 706
   , Generic1
-#endif
 #endif
   )
 
@@ -157,8 +148,6 @@ instance Comonad (Name n) where
   extend f w@(Name n _) = Name n (f w)
   {-# INLINE extend #-}
 
-#if MIN_VERSION_transformers(0,5,0) || !MIN_VERSION_transformers(0,4,0)
-
 instance Eq2 Name where
   liftEq2 _ g (Name _ b) (Name _ d) = g b d
 
@@ -182,20 +171,6 @@ instance Show b => Show1 (Name b) where
 
 instance Read b => Read1 (Name b) where
   liftReadsPrec f _ = readsData $ readsBinaryWith readsPrec f "Name" Name
-
-#else
-
-instance Eq1   (Name b) where eq1 = (==)
-instance Ord1  (Name b) where compare1 = compare
-instance Show b => Show1 (Name b) where showsPrec1 = showsPrec
-instance Read b => Read1 (Name b) where readsPrec1 = readsPrec
-
---instance Eq2 Name   where eq2 = (==)
---instance Ord2 Name  where compare2   = compare
---instance Show2 Name where showsPrec2 = showsPrec
---instance Read2 Name where readsPrec2  = readsPrec
-
-#endif
 
 instance Serial2 Name where
   serializeWith2 pb pf (Name b a) = pb b >> pf a

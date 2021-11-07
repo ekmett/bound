@@ -5,13 +5,11 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE TypeOperators #-}
 
-{-# OPTIONS_GHC -fwarn-incomplete-patterns -fno-warn-orphans #-}
+{-# OPTIONS_GHC -Wincomplete-patterns -Wno-orphans #-}
 
 module Main where
 
--- Dara.Functor.Classes in transformers 0.4.0 are totally different
-#if MIN_VERSION_transformers(0,5,0) || !MIN_VERSION_transformers(0,4,0)
-
+import Data.Kind
 import qualified Data.Vector as Vector
 import Data.Vector (Vector)
 import qualified Data.List as List
@@ -21,13 +19,8 @@ import Control.Monad
 import Control.Applicative
 import Prelude hiding (foldr)
 import Data.Functor.Classes
-import Data.Vector.Functor.Classes ()
 import Data.Type.Equality
 import Bound
-
-# if !(MIN_VERSION_base(4,8,0))
-import Data.Monoid (Monoid(..))
-# endif
 
 infixl 9 :@
 infixr 5 :>
@@ -40,24 +33,24 @@ data Exp a
 
 data Index = VarI | WildI | AsI Index | ConI [Index]
 
-data Pat :: Index -> (* -> *) -> * -> * where
+data Pat :: Index -> (Type -> Type) -> Type -> Type where
   VarP  ::                             Pat 'VarI f a
   WildP ::                             Pat 'WildI f a
   AsP   :: Pat i f a                -> Pat ('AsI i) f a
   ConP  :: String    -> Pats bs f a -> Pat ('ConI bs) f a
   ViewP :: f a       -> Pat b f a   -> Pat b f a -- TODO: allow references to earlier variables
 
-data Pats :: [Index] -> (* -> *) -> * -> * where
+data Pats :: [Index] -> (Type -> Type) -> Type -> Type where
   NilP  :: Pats '[] f a
   (:>) :: Pat b f a -> Pats bs f a -> Pats (b ': bs) f a
 
-data Path :: Index -> * where
+data Path :: Index -> Type where
   V :: Path 'VarI
   L :: Path ('AsI a)
   R :: Path a -> Path ('AsI a)
   C :: MPath as -> Path ('ConI as)
 
-data MPath :: [Index] -> * where
+data MPath :: [Index] -> Type where
   H :: Path a   -> MPath (a ':as)
   T :: MPath as -> MPath (a ':as)
 
@@ -347,6 +340,5 @@ instance Show (Path i) where
 --
 -- >>> lam (conp "Hello" [varp "x", wildp]) (Var "y")
 -- Lam (ConP "Hello" (VarP :> WildP :> NilP)) (Scope (Var (F (Var "y"))))
-#endif
 main :: IO ()
 main = return ()

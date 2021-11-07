@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP, DeriveFunctor, DeriveFoldable, DeriveTraversable, RankNTypes, ScopedTypeVariables #-}
+{-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable, RankNTypes, ScopedTypeVariables #-}
 module Main where
 
 -- It's possible to use bound "sideways" in order to support terms which do not
@@ -13,13 +13,6 @@ import Control.Monad (ap)
 import Data.Functor.Identity
 import Data.IORef
 import Data.Void (Void, absurd)
-
-#if !(MIN_VERSION_base(4,8,0))
-import Control.Applicative
-import Data.Foldable
-import Data.Traversable
-#endif
-
 
 -- PART 1: We want to model a tiny assembly language.
 --

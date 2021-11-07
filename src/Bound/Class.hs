@@ -2,7 +2,7 @@
 #if defined(__GLASGOW_HASKELL__)
 {-# LANGUAGE DefaultSignatures #-}
 #endif
-{-# OPTIONS -fno-warn-deprecations #-}
+{-# OPTIONS -Wno-deprecations #-}
 -----------------------------------------------------------------------------
 -- |
 -- Copyright   :  (C) 2012-2015 Edward Kmett
@@ -21,9 +21,6 @@ module Bound.Class
   ) where
 
 import Control.Monad.Trans.Class
-#if !MIN_VERSION_base(4,8,0)
-import Data.Monoid
-#endif
 import Control.Monad.Trans.Cont
 import Control.Monad.Trans.Error
 import Control.Monad.Trans.Identity
