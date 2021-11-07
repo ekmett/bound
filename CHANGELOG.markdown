@@ -1,5 +1,5 @@
-next [????.??.??]
------------------
+2.0.4 [2021.11.07]
+------------------
 * Allow building with `template-haskell-2.18` (GHC 9.2).
 * The `Bound.TH` module no longer requires the `TemplateHaskell` extension
   (only `TemplateHaskellQuotes`) when building with GHC 9.0 or later.
