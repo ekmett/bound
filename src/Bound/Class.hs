@@ -22,14 +22,16 @@ module Bound.Class
 
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Cont
-import Control.Monad.Trans.Error
 import Control.Monad.Trans.Identity
-import Control.Monad.Trans.List
 import Control.Monad.Trans.Maybe
 import Control.Monad.Trans.RWS
 import Control.Monad.Trans.Reader
 import Control.Monad.Trans.State
 import Control.Monad.Trans.Writer
+#if !(MIN_VERSION_transformers(0,6,0))
+import Control.Monad.Trans.Error
+import Control.Monad.Trans.List
+#endif
 
 infixl 1 >>>=
 
@@ -73,15 +75,7 @@ instance Bound (ContT c) where
   m >>>= f = m >>= lift . f
   {-# INLINE (>>>=) #-}
 
-instance Error e => Bound (ErrorT e) where
- m >>>= f = m >>= lift . f
- {-# INLINE (>>>=) #-}
-
 instance Bound IdentityT where
- m >>>= f = m >>= lift . f
- {-# INLINE (>>>=) #-}
-
-instance Bound ListT where
  m >>>= f = m >>= lift . f
  {-# INLINE (>>>=) #-}
 
@@ -104,6 +98,16 @@ instance Bound (StateT s) where
 instance Monoid w => Bound (WriterT w) where
  m >>>= f = m >>= lift . f
  {-# INLINE (>>>=) #-}
+
+#if !(MIN_VERSION_transformers(0,6,0))
+instance Error e => Bound (ErrorT e) where
+ m >>>= f = m >>= lift . f
+ {-# INLINE (>>>=) #-}
+
+instance Bound ListT where
+ m >>>= f = m >>= lift . f
+ {-# INLINE (>>>=) #-}
+#endif
 
 infixr 1 =<<<
 -- | A flipped version of ('>>>=').
