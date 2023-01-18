@@ -61,15 +61,17 @@ instance Monad Exp where
   Lam e    >>= f = Lam (e >>>= f)
   Let bs b >>= f = Let (map (>>>= f) bs) (b >>>= f)
 
-deriveEq1   ''Exp
-deriveOrd1  ''Exp
-deriveRead1 ''Exp
-deriveShow1 ''Exp
-
-instance Eq a => Eq (Exp a) where (==) = eq1
-instance Ord a => Ord (Exp a) where compare = compare1
-instance Show a => Show (Exp a) where showsPrec = showsPrec1
-instance Read a => Read (Exp a) where readsPrec = readsPrec1
+fmap concat $ sequence
+  [ deriveEq1   ''Exp
+  , deriveOrd1  ''Exp
+  , deriveRead1 ''Exp
+  , deriveShow1 ''Exp
+  , [d| instance Eq a => Eq (Exp a) where (==) = eq1
+        instance Ord a => Ord (Exp a) where compare = compare1
+        instance Show a => Show (Exp a) where showsPrec = showsPrec1
+        instance Read a => Read (Exp a) where readsPrec = readsPrec1
+      |]
+  ]
 
 -- | Compute the normal form of an expression
 nf :: Exp a -> Exp a

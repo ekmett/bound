@@ -45,7 +45,11 @@ import Control.Monad.Trans.Maybe (MaybeT (..))
 -- Also works for components that are lists or instances of 'Functor',
 -- but still does not work for a great deal of other things.
 --
--- @deriving-compat@ package may be used to derive the 'Show1' and 'Read1' instances
+-- The @deriving-compat@ package may be used to derive the 'Show1' and 'Read1'
+-- instances. Note that due to Template Haskell staging restrictions, we must
+-- define these instances within the same TH splice as the 'Show' and 'Read'
+-- instances. (This is needed for GHC 9.6 and later, where 'Show' and 'Read'
+-- are quantified superclasses of 'Show1' and 'Read1', respectively.)
 --
 -- @
 -- {-\# LANGUAGE DeriveFunctor      #-}
@@ -64,10 +68,14 @@ import Control.Monad.Trans.Maybe (MaybeT (..))
 --   deriving (Functor)
 --
 -- makeBound ''Exp
--- deriveShow1 ''Exp
--- deriveRead1 ''Exp
--- instance Read a => Read (Exp a) where readsPrec = readsPrec1
--- instance Show a => Show (Exp a) where showsPrec = showsPrec1
+--
+-- concat <$> sequence
+--   [ deriveShow1 ''Exp
+--   , deriveRead1 ''Exp
+--   , [d| instance Read a => Read (Exp a) where readsPrec = readsPrec1
+--         instance Show a => Show (Exp a) where showsPrec = showsPrec1
+--       |]
+--   ]
 -- @
 --
 -- and in GHCi
@@ -81,23 +89,23 @@ import Control.Monad.Trans.Maybe (MaybeT (..))
 -- ghci> :{
 -- ghci| data Exp a = V a | App (Exp a) (Exp a) | Lam (Scope () Exp a) | ND [Exp a] | I Int deriving (Functor)
 -- ghci| makeBound ''Exp
--- ghci| deriveShow1 ''Exp
--- ghci| deriveRead1 ''Exp
--- ghci| instance Read a => Read (Exp a) where readsPrec = readsPrec1
--- ghci| instance Show a => Show (Exp a) where showsPrec = showsPrec1
+-- ghci| fmap concat $ sequence [deriveShow1 ''Exp, deriveRead1 ''Exp, [d| instance Read a => Read (Exp a) where { readsPrec = readsPrec1 }; instance Show a => Show (Exp a) where { showsPrec = showsPrec1 } |]]
 -- ghci| :}
 -- @
 --
--- 'Eq' and 'Ord' instances can be derived similarly
+-- The 'Eq' and 'Ord' instances can be derived similarly:
 --
 -- @
 -- import Data.Functor.Classes (Eq1, Ord1, eq1, compare1)
 -- import Data.Deriving        (deriveEq1, deriveOrd1)
 --
--- deriveEq1 ''Exp
--- deriveOrd1 ''Exp
--- instance Eq a => Eq (Exp a) where (==) = eq1
--- instance Ord a => Ord (Exp a) where compare = compare1
+-- fmap concat $ sequence
+--   [ deriveEq1 ''Exp
+--   , deriveOrd1 ''Exp
+--   , [d| instance Eq a => Eq (Exp a) where (==) = eq1
+--         instance Ord a => Ord (Exp a) where compare = compare1
+--       |]
+--   ]
 -- @
 --
 -- or in GHCi:
@@ -106,10 +114,7 @@ import Control.Monad.Trans.Maybe (MaybeT (..))
 -- ghci> import Data.Functor.Classes (Eq1, Ord1, eq1, compare1)
 -- ghci> import Data.Deriving        (deriveEq1, deriveOrd1)
 -- ghci> :{
--- ghci| deriveEq1 ''Exp
--- ghci| deriveOrd1 ''Exp
--- ghci| instance Eq a => Eq (Exp a) where (==) = eq1
--- ghci| instance Ord a => Ord (Exp a) where compare = compare1
+-- ghci| fmap concat $ sequence [deriveEq1 ''Exp, deriveOrd1 ''Exp, [d| instance Eq a => Eq (Exp a) where { (==) = eq1 }; instance Ord a => Ord (Exp a) where { compare = compare1 } |]]
 -- ghci| :}
 -- @
 --
