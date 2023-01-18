@@ -1,3 +1,7 @@
+next [????.??.??]
+-----------------
+* Allow the examples to build with `base-4.18.*` (GHC 9.6).
+
 2.0.5 [2022.05.07]
 ------------------
 * Allow building with `transformers-0.6.*`.

@@ -45,15 +45,18 @@
 -- @
 --
 -- @
--- deriveEq1   ''Exp
--- deriveOrd1  ''Exp
--- deriveRead1 ''Exp
--- deriveShow1 ''Exp
+-- concat <$> sequence
+--   [ deriveEq1   ''Exp
+--   , deriveOrd1  ''Exp
+--   , deriveRead1 ''Exp
+--   , deriveShow1 ''Exp
 --
--- instance 'Eq' a   => 'Eq'   (Exp a) where (==) = eq1
--- instance 'Ord' a  => 'Ord'  (Exp a) where compare = compare1
--- instance 'Show' a => 'Show' (Exp a) where showsPrec = showsPrec1
--- instance 'Read' a => 'Read' (Exp a) where readsPrec = readsPrec1
+--   , [d| instance 'Eq' a   => 'Eq'   (Exp a) where (==) = eq1
+--         instance 'Ord' a  => 'Ord'  (Exp a) where compare = compare1
+--         instance 'Show' a => 'Show' (Exp a) where showsPrec = showsPrec1
+--         instance 'Read' a => 'Read' (Exp a) where readsPrec = readsPrec1
+--       |]
+--   ]
 -- @
 --
 -- @
