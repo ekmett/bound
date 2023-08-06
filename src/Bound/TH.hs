@@ -133,7 +133,7 @@ makeBound name = do
     DataD _ _name vars _ cons _ -> makeBound' name vars cons
     _ -> fail $ show name ++ " Must be a data type."
 
-makeBound' :: Name -> [TyVarBndrUnit] -> [Con] -> DecsQ
+makeBound' :: Name -> [TyVarBndrVis] -> [Con] -> DecsQ
 makeBound' name vars cons = do
   let instanceHead :: Type
       instanceHead = name `conAppsT` map VarT (typeVars (init vars))
@@ -172,11 +172,11 @@ data Components
   | Variable Name
   deriving Show
 
-constructBind :: Name -> [TyVarBndrUnit] -> [Con] -> ExpQ
+constructBind :: Name -> [TyVarBndrVis] -> [Con] -> ExpQ
 constructBind name vars cons = do
   interpret =<< construct name vars cons
 
-construct :: Name -> [TyVarBndrUnit] -> [Con] -> Q [Components]
+construct :: Name -> [TyVarBndrVis] -> [Con] -> Q [Components]
 construct name vars constructors = do
   var <- getPure name vars constructors
   for constructors $ \con -> do
@@ -293,7 +293,7 @@ stripLast2 (a `AppT` b `AppT` _ `AppT` d)
 stripLast2 _ = Nothing
 
 -- Returns candidate
-getPure :: Name -> [TyVarBndrUnit] -> [Con] -> Q Name
+getPure :: Name -> [TyVarBndrVis] -> [Con] -> Q Name
 getPure _name tyvr cons= do
   let
     findReturn :: Type -> [(Name, [Type])] -> Name
@@ -337,5 +337,9 @@ typeVars = map tvName
 -- | Apply arguments to a type constructor.
 conAppsT :: Name -> [Type] -> Type
 conAppsT conName = foldl AppT (ConT conName)
+
+# if !MIN_VERSION_template_haskell(2,21,0) && !MIN_VERSION_th_abstraction(0,6,0)
+type TyVarBndrVis = TyVarBndrUnit
+# endif
 #else
 #endif

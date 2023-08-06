@@ -1,3 +1,7 @@
+next [????.??.??]
+-----------------
+* Support building with `template-haskell-2.21.*` (GHC 9.8).
+
 2.0.6 [2023.01.18]
 ------------------
 * Allow the examples to build with `base-4.18.*` (GHC 9.6).
