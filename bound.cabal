@@ -93,7 +93,7 @@ library
     profunctors      >= 3.3     && < 6,
     -- TODO: Eventually, we should bump the lower version bounds to >=0.6 so
     -- that we can remove some CPP in Bound.TH.
-    th-abstraction   >= 0.4     && < 0.7,
+    th-abstraction   >= 0.4     && < 0.8,
     transformers     >= 0.5     && < 0.7,
     transformers-compat >= 0.5  && < 1
 
