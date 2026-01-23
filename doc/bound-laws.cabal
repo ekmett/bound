@@ -31,7 +31,7 @@ tested-with:
 
 source-repository head
   type: git
-  location: git://github.com/ekmett/bound.git
+  location: https://github.com/ekmett/bound.git
 
 library
   exposed-modules: BoundLaws

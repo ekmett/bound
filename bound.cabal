@@ -68,7 +68,7 @@ flag template-haskell
 
 source-repository head
   type: git
-  location: git://github.com/ekmett/bound.git
+  location: https://github.com/ekmett/bound.git
 
 library
   hs-source-dirs: src
