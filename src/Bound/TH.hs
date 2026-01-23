@@ -338,8 +338,8 @@ typeVars = map tvName
 conAppsT :: Name -> [Type] -> Type
 conAppsT conName = foldl AppT (ConT conName)
 
-# if !MIN_VERSION_template_haskell(2,21,0) && !MIN_VERSION_th_abstraction(0,6,0)
+#if !MIN_VERSION_template_haskell(2,21,0) && !MIN_VERSION_th_abstraction(0,6,0)
 type TyVarBndrVis = TyVarBndrUnit
-# endif
+#endif
 #else
 #endif
