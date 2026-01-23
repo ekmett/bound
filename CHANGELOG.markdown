@@ -1,3 +1,7 @@
+next [????.??.??]
+-----------------
+* Replace `bifunctors` dependency with `bifunctor-classes-compat`.
+
 2.0.7 [2023.08.06]
 ------------------
 * Support building with `template-haskell-2.21.*` (GHC 9.8).

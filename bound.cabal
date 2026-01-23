@@ -85,7 +85,6 @@ library
 
   build-depends:
     base             >= 4.9     && < 5,
-    bifunctors       >= 5       && < 6,
     binary           >= 0.8.3   && < 0.9,
     bytes            >= 0.15.2  && < 1,
     cereal           >= 0.4.1   && < 0.6,
@@ -99,6 +98,9 @@ library
     th-abstraction   >= 0.4     && < 0.8,
     transformers     >= 0.5     && < 0.7,
     transformers-compat >= 0.5  && < 1
+
+  if !impl(ghc >= 8.2)
+    build-depends: bifunctor-classes-compat >= 0.1 && < 0.2
 
   ghc-options: -Wall -O2 -fspec-constr -fdicts-cheap -funbox-strict-fields
 
