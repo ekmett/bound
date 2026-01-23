@@ -1,6 +1,7 @@
 next [????.??.??]
 -----------------
 * Replace `bifunctors` dependency with `bifunctor-classes-compat`.
+* Remove unused `transformers-compat` dependency.
 
 2.0.7 [2023.08.06]
 ------------------

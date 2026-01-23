@@ -96,8 +96,7 @@ library
     -- TODO: Eventually, we should bump the lower version bounds to >=0.6 so
     -- that we can remove some CPP in Bound.TH.
     th-abstraction   >= 0.4     && < 0.8,
-    transformers     >= 0.5     && < 0.7,
-    transformers-compat >= 0.5  && < 1
+    transformers     >= 0.5     && < 0.7
 
   if !impl(ghc >= 8.2)
     build-depends: bifunctor-classes-compat >= 0.1 && < 0.2
@@ -121,8 +120,7 @@ test-suite Simple
     base            >= 4.5   && < 5,
     bound,
     deriving-compat >= 0.3.4 && < 0.7,
-    transformers,
-    transformers-compat
+    transformers
 
 test-suite Overkill
   type: exitcode-stdio-1.0
@@ -134,7 +132,6 @@ test-suite Overkill
     base >= 4.5 && < 5,
     bound,
     transformers,
-    transformers-compat,
     vector >= 0.12
   if !impl(ghc >= 7.8)
     buildable: False
@@ -148,8 +145,7 @@ test-suite Deriving
   build-depends:
     base >= 4.5 && < 5,
     bound,
-    transformers,
-    transformers-compat
+    transformers
 
 test-suite Imperative
   type: exitcode-stdio-1.0
@@ -161,5 +157,4 @@ test-suite Imperative
     base >= 4.5 && < 5,
     bound,
     transformers,
-    transformers-compat,
     void
