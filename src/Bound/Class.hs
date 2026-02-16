@@ -35,7 +35,7 @@ import Control.Monad.Trans.List
 
 infixl 1 >>>=
 
--- | Instances of 'Bound' generate left modules over monads.
+-- | Instances of 'Bound' generate right modules over monads.
 --
 -- This means they should satisfy the following laws:
 --
